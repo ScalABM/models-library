@@ -1,4 +1,5 @@
-import akka.actor.{Props, ActorRef, Actor}
+import akka.actor.{Props, ActorRef}
+import akka.agent.Agent
 
 import markets.Cancel
 import markets.BaseActor
@@ -16,16 +17,18 @@ import scala.util.Random
 
 case class RandomTradingActor(askOrderProbability: Double,
                               prng: Random,
-                              var markets: immutable.Map[Tradable, ActorRef]) extends Actor
-  with BaseActor with MarketParticipantLike {
+                              var markets: immutable.Map[Tradable, (ActorRef, Agent[Tick])])
+
+  extends BaseActor
+  with MarketParticipantLike {
 
   protected var outstandingOrders = immutable.Set.empty[Order]
 
   // arrival rate of limit orders
-  val alpha = 0.2
+  val alpha = 0.1
 
   // arrival rate of market orders...
-  val mu = 0.1
+  val mu = 0.2
 
   // arrival rate of order cancellations...
   val delta = 0.15
@@ -45,9 +48,9 @@ case class RandomTradingActor(askOrderProbability: Double,
     self ! CancelOrder
   }
 
-  context.system.scheduler.schedule(10000.millis, 10000.millis) {
-    println(context.self.path.name + ":" + outstandingOrders.size)
-  }
+  //context.system.scheduler.schedule(10000.millis, 10000.millis) {
+  //  println(context.self.path.name + ":" + outstandingOrders.size)
+  //}
 
   /** Random price between 1 and upper */
   def price(prng: Random, lower: Long = 1, upper: Long = Long.MaxValue): Long = {
@@ -62,7 +65,7 @@ case class RandomTradingActor(askOrderProbability: Double,
     (-Math.log(prng.nextDouble()) / rate).millis
   }
 
-  def investmentStrategy(): (Tradable, ActorRef) = {
+  def investmentStrategy(): (Tradable, (ActorRef, Agent[Tick])) = {
     prng.shuffle(markets).head
   }
 
@@ -70,14 +73,13 @@ case class RandomTradingActor(askOrderProbability: Double,
     prng.shuffle(outstandingOrders).headOption
   }
 
-  def generateLimitOrder(tradable: Tradable): LimitOrderLike = {
+  def generateLimitOrder(tradable: Tradable, ticker: Agent[Tick]): LimitOrderLike = {
+    val tick = ticker.get()
     if (prng.nextDouble() < askOrderProbability) {
-      val askPrice = price(prng, upper = Long.MaxValue / 2)
-      //println("AskPrice:" + askPrice)
+      val askPrice = price(prng, lower = tick.bidPrice)
       LimitAskOrder(self, askPrice, quantity(prng), timestamp(), tradable, uuid())
     } else {
-      val bidPrice = price(prng, lower = Long.MaxValue / 2)
-      //println("BidPrice:" + bidPrice)
+      val bidPrice = price(prng, upper = tick.askPrice)
       LimitBidOrder(self, bidPrice, quantity(prng), timestamp(), tradable, uuid())
     }
 
@@ -94,13 +96,13 @@ case class RandomTradingActor(askOrderProbability: Double,
 
   def tradingBehavior: Receive = {
     case GenerateLimitOrder =>
-      val (tradable, market) = investmentStrategy()
-      market ! generateLimitOrder(tradable)
+      val (tradable, (market, ticker)) = investmentStrategy()
+      market ! generateLimitOrder(tradable, ticker)
       context.system.scheduler.scheduleOnce(waitTime(prng, alpha)) {
         self ! GenerateLimitOrder
       }
     case GenerateMarketOrder =>
-      val (tradable, market) = investmentStrategy()
+      val (tradable, (market, _)) = investmentStrategy()
       market ! generateMarketOrder(tradable)
       context.system.scheduler.scheduleOnce(waitTime(prng, mu)) {
         self ! GenerateMarketOrder
@@ -109,7 +111,8 @@ case class RandomTradingActor(askOrderProbability: Double,
       val order = orderCancellationStrategy()
       order match {
         case Some(outstandingOrder) =>
-          markets(outstandingOrder.tradable) ! Cancel(outstandingOrder, timestamp(), uuid())
+          val (market, _) = markets(outstandingOrder.tradable)
+          market ! Cancel(outstandingOrder, timestamp(), uuid())
         case None =>  // no outstanding order to cancel!
       }
       context.system.scheduler.scheduleOnce(waitTime(prng, delta)) {
@@ -135,7 +138,7 @@ object RandomTradingActor {
 
   def props(askOrderProbability: Double,
             prng: Random,
-            markets: immutable.Map[Tradable, ActorRef]): Props = {
+            markets: immutable.Map[Tradable, (ActorRef, Agent[Tick])]): Props = {
     Props(new RandomTradingActor(askOrderProbability, prng, markets))
   }
 }
