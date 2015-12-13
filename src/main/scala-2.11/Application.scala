@@ -1,4 +1,5 @@
-import akka.actor.{PoisonPill, ActorRef, Props, ActorSystem}
+import akka.actor.{PoisonPill, Kill, ActorRef, Props, ActorSystem}
+import akka.agent.Agent
 
 import com.typesafe.config.ConfigFactory
 import markets.MarketActor
@@ -27,15 +28,16 @@ object Application extends App {
   }
 
   // Create some tickers...
-  val model = ActorSystem("model")
+  val model = ActorSystem("model", config)
   val settlementMechanism = model.actorOf(Props[LoggingSettlementMechanismActor])
 
   // Create some markets
   val referencePrice = config.getLong("market.referencePrice")
   val matchingEngine = CDAMatchingEngine(AskPriceTimeOrdering, BidPriceTimeOrdering, referencePrice)
   val markets = securities.map {
-    s => s -> model.actorOf(MarketActor.props(matchingEngine, settlementMechanism, s))
-  } (collection.breakOut): immutable.Map[Tradable, ActorRef]
+    s => s -> (model.actorOf(MarketActor.props(matchingEngine, settlementMechanism, s)
+      .withDispatcher("market-dispatcher")), Agent(Tick(1, 1, Some(1), 1)))
+  } (collection.breakOut): immutable.Map[Tradable, (ActorRef, Agent[Tick])]
 
   // Create some simple traders
   val numberTraders = config.getInt("traders.number")
