@@ -19,7 +19,7 @@ trait ZILiquiditySupplier extends LiquiditySupplier {
       LimitAskOrder(self, price, quantity, timestamp(), tradable, uuid())
     } else {
       val price = bidPrice(prng, config.minBidPrice, config.maxBidPrice)
-      val quantity = bidQuantity(prng, config.minAskQuantity, config.maxAskQuantity)
+      val quantity = bidQuantity(prng, config.minBidQuantity, config.maxBidQuantity)
       LimitBidOrder(self, price, quantity, timestamp(), tradable, uuid())
     }
   }
