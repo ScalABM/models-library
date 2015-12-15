@@ -22,7 +22,7 @@ trait ZICLiquiditySupplier extends LiquiditySupplier {
       LimitAskOrder(self, price, quantity, timestamp(), tradable, uuid())
     } else {  // buy when tradable is under-valued!
       val price = bidPrice(prng, config.minBidPrice, valuation)
-      val quantity = bidQuantity(prng, config.minAskQuantity, config.maxAskQuantity)
+      val quantity = bidQuantity(prng, config.minBidQuantity, config.maxBidQuantity)
       LimitBidOrder(self, price, quantity, timestamp(), tradable, uuid())
     }
   }
