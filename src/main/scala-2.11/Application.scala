@@ -1,14 +1,18 @@
-import akka.actor.{PoisonPill, Kill, ActorRef, Props, ActorSystem}
+import akka.actor.{PoisonPill, ActorRef, ActorSystem}
 import akka.agent.Agent
 
+import Reaper.WatchMe
+import actors.{ZILiquidityMarketMaker, RandomTraderConfig}
 import com.typesafe.config.ConfigFactory
 import markets.MarketActor
-import markets.clearing.engines.CDAMatchingEngine
+import markets.engines.CDAMatchingEngine
 import markets.orders.orderings.ask.AskPriceTimeOrdering
 import markets.orders.orderings.bid.BidPriceTimeOrdering
+import markets.tickers.Tick
 import markets.tradables.{Security, Tradable}
+import strategies.placement.PoissonOrderPlacementStrategy
 
-import scala.collection.immutable
+import scala.collection.{mutable, immutable}
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
@@ -29,25 +33,47 @@ object Application extends App {
 
   // Create some tickers...
   val model = ActorSystem("model", config)
-  val settlementMechanism = model.actorOf(Props[LoggingSettlementMechanismActor])
+  val counter = Agent[Int](0)
+
+  val numberRoutees = config.getInt("settlement.numberRoutees")
+  val settlementMechanism = model.actorOf(SettlementRouter.props(counter, numberRoutees))
+
+  // create some tickers
+  val tickers = securities.map {
+    security => security -> Agent(Tick(1, 1, Some(1), 1, 1))
+  } (collection.breakOut): mutable.Map[Tradable, Agent[Tick]]
 
   // Create some markets
   val referencePrice = config.getLong("market.referencePrice")
   val matchingEngine = CDAMatchingEngine(AskPriceTimeOrdering, BidPriceTimeOrdering, referencePrice)
-  val markets = securities.map {
-    s => s -> (model.actorOf(MarketActor.props(matchingEngine, settlementMechanism, s)
-      .withDispatcher("market-dispatcher")), Agent(Tick(1, 1, Some(1), 1)))
-  } (collection.breakOut): immutable.Map[Tradable, (ActorRef, Agent[Tick])]
 
-  // Create some simple traders
+  val markets = securities.map { security =>
+    val props = MarketActor.props(matchingEngine, settlementMechanism, tickers(security), security)
+    security -> model.actorOf(props.withDispatcher("market-dispatcher"))
+  } (collection.breakOut): mutable.Map[Tradable, ActorRef]
+
+  // Create some traders
   val numberTraders = config.getInt("traders.number")
+  val traderConfig = new RandomTraderConfig(config.getConfig("traders.params"))
+  val orderPlacementStrategy = new PoissonOrderPlacementStrategy(prng, 2.0, model.scheduler)
   val traders = immutable.IndexedSeq.fill(numberTraders) {
-    val askOrderProbability = config.getDouble("traders.askOrderProbability")
-    model.actorOf(RandomTradingActor.props(askOrderProbability, prng, markets))
+    model.actorOf(ZILiquidityMarketMaker.props(traderConfig, markets, orderPlacementStrategy, prng, tickers))
   }
 
+  // Initialize the reaper
+  val reaper = model.actorOf(ProductionReaper.props(counter))
+  markets.foreach {
+    case (tradable: Tradable, market: ActorRef) => reaper ! WatchMe(market)
+  }
+  traders.foreach(trader => reaper ! WatchMe(trader))
+  reaper ! WatchMe(settlementMechanism)
+
   model.scheduler.scheduleOnce(1.minute) {
-    //traders.foreach(trader => trader ! PoisonPill)
-    model.terminate()
+    traders.foreach(trader => trader ! PoisonPill)
+    markets.foreach {
+      case (tradable: Tradable, market: ActorRef) => market ! PoisonPill
+    }
+    settlementMechanism ! PoisonPill
+    println(counter.get)
   }
 }

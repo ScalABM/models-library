@@ -1,29 +1,25 @@
-package strategies
+package strategies.trading
 
 import akka.agent.Agent
 
+import actors.RandomTraderConfig
 import markets.tickers.Tick
 import markets.tradables.Tradable
 
 import scala.collection.mutable
+import scala.util.Random
+
 
 /** Zero Intelligence (ZI) market order trading strategy from Gode and Sunder, JPE (1996). */
-trait ZIMarketOrderTradingStrategy extends RandomLimitOrderTradingStrategy {
-
-  def maxAskQuantity: Long
-
-  def maxBidQuantity: Long
-
-  def minAskQuantity: Long
-
-  def minBidQuantity:Long
+case class ZIMarketOrderTradingStrategy(config: RandomTraderConfig, prng: Random)
+  extends RandomMarketOrderTradingStrategy {
 
   def askQuantity(ticker: Agent[Tick], tradable: Tradable): Long = {
-    uniformRandomVariate(minAskQuantity, maxAskQuantity)
+    uniformRandomVariate(config.minAskQuantity, config.maxAskQuantity)
   }
 
   def bidQuantity(ticker: Agent[Tick], tradable: Tradable): Long = {
-    uniformRandomVariate(minBidQuantity, maxBidQuantity)
+    uniformRandomVariate(config.minBidQuantity, config.maxBidQuantity)
   }
 
   def chooseOneOf(tickers: mutable.Map[Tradable, Agent[Tick]]): Option[(Tradable, Agent[Tick])] = {
