@@ -1,24 +1,27 @@
-package strategies
+package strategies.trading
 
 import akka.agent.Agent
 
+import actors.RandomTraderConfig
 import markets.tickers.Tick
 import markets.tradables.Tradable
 
 import scala.collection.mutable
+import scala.util.Random
 
 
 /** Zero Intelligence (Constrained) behavior as defined by Gode and Sunder, JPE (1993). */
-trait ZICLimitOrderTradingStrategy extends ZILimitOrderTradingStrategy {
-
-  def valuations: mutable.Map[Tradable, Long]
+class ZICLimitOrderTradingStrategy(config: RandomTraderConfig,
+                                   prng: Random,
+                                   valuations: mutable.Map[Tradable, Long])
+  extends ZILimitOrderTradingStrategy(config, prng) {
 
   override def askPrice(ticker: Agent[Tick], tradable: Tradable): Long = {
-    uniformRandomVariate(valuations(tradable), maxAskPrice)
+    uniformRandomVariate(valuations(tradable), config.maxAskPrice)
   }
 
   override def bidPrice(ticker: Agent[Tick], tradable: Tradable): Long = {
-    uniformRandomVariate(minBidPrice, valuations(tradable))
+    uniformRandomVariate(config.minBidPrice, valuations(tradable))
   }
 
   override def askOrderStrategy(tickers: mutable.Map[Tradable, Agent[Tick]]): Option[(Long, Long, Tradable)] = {

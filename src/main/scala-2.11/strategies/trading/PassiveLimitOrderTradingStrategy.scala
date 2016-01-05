@@ -1,11 +1,12 @@
-package strategies
+package strategies.trading
 
 import akka.agent.Agent
 
+import actors.RandomTraderConfig
 import markets.tickers.Tick
 import markets.tradables.Tradable
 
-import scala.collection.mutable
+import scala.util.Random
 
 /** Passive limit order trading strategy from Farmer et al, PNAS (2005).
   *
@@ -13,14 +14,24 @@ import scala.collection.mutable
   *       prices and then places its next limit order in an attempt to insure that the order
   *       rests in the book (rather than executing immediately).
   */
-trait PassiveLimitOrderTradingStrategy extends ZILimitOrderTradingStrategy {
+class PassiveLimitOrderTradingStrategy(config: RandomTraderConfig, prng: Random)
+  extends ZILimitOrderTradingStrategy(config, prng) {
 
   override def askPrice(ticker: Agent[Tick], tradable: Tradable): Long = {
-    uniformRandomVariate(ticker.get.bidPrice, maxAskPrice)
+    uniformRandomVariate(ticker.get.bidPrice, config.maxAskPrice)
   }
 
   override def bidPrice(ticker: Agent[Tick], tradable: Tradable): Long = {
-    uniformRandomVariate(ticker.get.askPrice, maxBidPrice)
+    uniformRandomVariate(ticker.get.askPrice, config.maxBidPrice)
+  }
+
+}
+
+
+object PassiveLimitOrderTradingStrategy {
+
+  def apply(config: RandomTraderConfig, prng: Random): PassiveLimitOrderTradingStrategy = {
+    new PassiveLimitOrderTradingStrategy(config, prng)
   }
 
 }

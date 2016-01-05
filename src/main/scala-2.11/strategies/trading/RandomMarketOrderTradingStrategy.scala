@@ -1,4 +1,4 @@
-package strategies
+package strategies.trading
 
 import akka.agent.Agent
 
