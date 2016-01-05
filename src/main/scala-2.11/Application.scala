@@ -55,9 +55,8 @@ object Application extends App {
   // Create some traders
   val numberTraders = config.getInt("traders.number")
   val traderConfig = new RandomTraderConfig(config.getConfig("traders.params"))
-  val orderPlacementStrategy = new PoissonOrderPlacementStrategy(prng, 2.0, model.scheduler)
   val traders = immutable.IndexedSeq.fill(numberTraders) {
-    model.actorOf(ZILiquidityMarketMaker.props(traderConfig, markets, orderPlacementStrategy, prng, tickers))
+    model.actorOf(ZILiquidityMarketMaker.props(traderConfig, markets, prng, tickers))
   }
 
   // Initialize the reaper

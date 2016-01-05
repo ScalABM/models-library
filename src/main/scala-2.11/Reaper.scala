@@ -15,7 +15,6 @@ limitations under the License.
 */
 import akka.actor.{Props, Actor, ActorRef, Terminated}
 import akka.agent.Agent
-import markets.tickers.Tick
 
 import scala.collection.mutable.ArrayBuffer
 
