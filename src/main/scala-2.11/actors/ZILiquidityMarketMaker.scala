@@ -4,35 +4,46 @@ import akka.actor.{ActorRef, Props}
 import akka.agent.Agent
 
 import markets.orders.Order
-import markets.participants.LiquidityMarketMaker
+import markets.participants.{OrderCanceler, LiquidityMarketMaker}
 import markets.tickers.Tick
 import markets.tradables.Tradable
-import strategies.placement.RandomOrderPlacementStrategy
+import strategies.cancellation.RandomOrderCancellationStrategy
+import strategies.placement.PoissonOrderPlacementStrategy
 import strategies.trading.{ZIMarketOrderTradingStrategy, ZILimitOrderTradingStrategy}
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
 import scala.util.Random
 
 
 case class ZILiquidityMarketMaker(config: RandomTraderConfig,
                                   markets: mutable.Map[Tradable, ActorRef],
-                                  orderPlacementStrategy: RandomOrderPlacementStrategy,
                                   prng: Random,
                                   tickers: mutable.Map[Tradable, Agent[Tick]])
-  extends LiquidityMarketMaker {
+  extends LiquidityMarketMaker with OrderCanceler {
 
   val limitOrderTradingStrategy = ZILimitOrderTradingStrategy(config, prng)
 
   val marketOrderTradingStrategy = ZIMarketOrderTradingStrategy(config, prng)
 
+  val orderCancellationStrategy = RandomOrderCancellationStrategy(prng)
+
+  val orderPlacementStrategy = PoissonOrderPlacementStrategy(prng, context.system.scheduler)
+
   val outstandingOrders = mutable.Set.empty[Order]
 
   // possible insert this into post-start life-cycle hook?
-  orderPlacementStrategy.schedule(self, SubmitLimitAskOrder)
-  orderPlacementStrategy.schedule(self, SubmitLimitBidOrder)
-  orderPlacementStrategy.schedule(self, SubmitMarketAskOrder)
-  orderPlacementStrategy.schedule(self, SubmitMarketBidOrder)
+  val initialDelay = Duration.Zero
+  val cancellationInterval = orderPlacementStrategy.waitTime(config.delta)
+  val limitOrderInterval = orderPlacementStrategy.waitTime(config.alpha)
+  val marketOrderInterval = orderPlacementStrategy.waitTime(config.mu)
+
+  orderPlacementStrategy.schedule(initialDelay, cancellationInterval, self, SubmitOrderCancellation)
+  orderPlacementStrategy.schedule(initialDelay, limitOrderInterval, self, SubmitLimitAskOrder)
+  orderPlacementStrategy.schedule(initialDelay, limitOrderInterval, self, SubmitLimitBidOrder)
+  orderPlacementStrategy.schedule(initialDelay, marketOrderInterval, self, SubmitMarketAskOrder)
+  orderPlacementStrategy.schedule(initialDelay, marketOrderInterval, self, SubmitMarketBidOrder)
 
 }
 
@@ -41,10 +52,9 @@ object ZILiquidityMarketMaker {
 
   def props(config: RandomTraderConfig,
             markets: mutable.Map[Tradable, ActorRef],
-            orderPlacementStrategy: RandomOrderPlacementStrategy,
             prng: Random,
             tickers: mutable.Map[Tradable, Agent[Tick]]): Props = {
-    Props(new ZILiquidityMarketMaker(config, markets, orderPlacementStrategy, prng, tickers))
+    Props(new ZILiquidityMarketMaker(config, markets, prng, tickers))
   }
 
 }
