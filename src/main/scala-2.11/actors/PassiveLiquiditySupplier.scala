@@ -24,6 +24,8 @@ case class PassiveLiquiditySupplier(config: RandomTraderConfig,
 
   val limitOrderTradingStrategy = PassiveLimitOrderTradingStrategy(config, prng)
 
+  val orderPlacementStrategy = PoissonOrderPlacementStrategy(prng, context.system.scheduler)
+
   val outstandingOrders = mutable.Set.empty[Order]
 
   // possible insert this into post-start life-cycle hook?
@@ -41,7 +43,7 @@ object PassiveLiquiditySupplier {
             markets: mutable.Map[Tradable, ActorRef],
             prng: Random,
             tickers: mutable.Map[Tradable, Agent[Tick]]): Props = {
-    Props(new PassiveLiquiditySupplier(config, markets, orderPlacementStrategy, prng, tickers))
+    Props(new PassiveLiquiditySupplier(config, markets, prng, tickers))
   }
 
 }
