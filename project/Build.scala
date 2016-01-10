@@ -1,3 +1,5 @@
+import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
+import com.typesafe.sbt.packager.docker.DockerPlugin
 import sbt._
 import Keys._
 
@@ -23,12 +25,14 @@ object Build extends Build {
     //"-XX:+PrintGCTimeStamps"
   )
 
-  lazy val exampleProject = Project("example-model", file(".")) settings(
-    version := "0.1.0-SNAPSHOT",
-    scalaVersion := "2.11.7",
-    libraryDependencies ++= dependencies,
-    fork in run := true,
-    javaOptions in run ++= options
+  lazy val exampleProject = Project("example-model", file("."))
+    .enablePlugins(JavaAppPackaging, DockerPlugin)
+    .settings(
+      version := "0.1.0-SNAPSHOT",
+      scalaVersion := "2.11.7",
+      libraryDependencies ++= dependencies,
+      fork in run := true,
+      javaOptions in run ++= options
     )
 
 }
