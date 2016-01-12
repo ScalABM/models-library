@@ -27,5 +27,6 @@ javaOptions ++= Seq(
   //"-XX:+PrintGCTimeStamps"
 )
 
+// Specify Docker options
 enablePlugins(JavaAppPackaging, DockerPlugin)
 maintainer in Docker := "davidrpugh <david.pugh@maths.ox.ac.uk>"
