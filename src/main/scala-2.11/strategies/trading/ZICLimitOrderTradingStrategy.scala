@@ -6,7 +6,7 @@ import actors.RandomTraderConfig
 import markets.tickers.Tick
 import markets.tradables.Tradable
 
-import scala.collection.mutable
+import scala.collection.{immutable, mutable}
 import scala.util.Random
 
 
@@ -16,17 +16,18 @@ class ZICLimitOrderTradingStrategy(config: RandomTraderConfig,
                                    valuations: mutable.Map[Tradable, Long])
   extends ZILimitOrderTradingStrategy(config, prng) {
 
-  override def askPrice(ticker: Agent[Tick], tradable: Tradable): Long = {
+  override def askPrice(ticker: Agent[immutable.Seq[Tick]], tradable: Tradable): Long = {
     uniformRandomVariate(valuations(tradable), config.maxAskPrice)
   }
 
-  override def bidPrice(ticker: Agent[Tick], tradable: Tradable): Long = {
+  override def bidPrice(ticker: Agent[immutable.Seq[Tick]], tradable: Tradable): Long = {
     uniformRandomVariate(config.minBidPrice, valuations(tradable))
   }
 
-  override def askOrderStrategy(tickers: mutable.Map[Tradable, Agent[Tick]]): Option[(Long, Long, Tradable)] = {
+  override def askOrderStrategy(tickers: mutable.Map[Tradable, Agent[immutable.Seq[Tick]]]): Option[(Long, Long, Tradable)] = {
     val overValuedTickers = tickers.filter {
-      case (tradable, ticker) => valuations(tradable) <= ticker.get.price.get
+      case (tradable, ticker) =>
+        valuations(tradable) <= ticker.get.head.price
     }
     chooseOneOf(overValuedTickers) match {
       case Some((tradable, ticker)) =>
@@ -36,9 +37,10 @@ class ZICLimitOrderTradingStrategy(config: RandomTraderConfig,
     }
   }
 
-  override def bidOrderStrategy(tickers: mutable.Map[Tradable, Agent[Tick]]): Option[(Long, Long, Tradable)] = {
+  override def bidOrderStrategy(tickers: mutable.Map[Tradable, Agent[immutable.Seq[Tick]]]): Option[(Long, Long, Tradable)] = {
     val underValuedTickers = tickers.filter {
-      case (tradable, ticker) => valuations(tradable) >= ticker.get.price.get
+      case (tradable, ticker) =>
+        valuations(tradable) >= ticker.get.head.price
     }
     chooseOneOf(underValuedTickers) match {
       case Some((tradable, ticker)) =>

@@ -6,6 +6,7 @@ import actors.RandomTraderConfig
 import markets.tickers.Tick
 import markets.tradables.Tradable
 
+import scala.collection.immutable
 import scala.util.Random
 
 /** Passive limit order trading strategy from Farmer et al, PNAS (2005).
@@ -17,12 +18,12 @@ import scala.util.Random
 class PassiveLimitOrderTradingStrategy(config: RandomTraderConfig, prng: Random)
   extends ZILimitOrderTradingStrategy(config, prng) {
 
-  override def askPrice(ticker: Agent[Tick], tradable: Tradable): Long = {
-    uniformRandomVariate(ticker.get.bidPrice, config.maxAskPrice)
+  override def askPrice(ticker: Agent[immutable.Seq[Tick]], tradable: Tradable): Long = {
+    uniformRandomVariate(ticker.get.head.bidPrice, config.maxAskPrice)
   }
 
-  override def bidPrice(ticker: Agent[Tick], tradable: Tradable): Long = {
-    uniformRandomVariate(ticker.get.askPrice, config.maxBidPrice)
+  override def bidPrice(ticker: Agent[immutable.Seq[Tick]], tradable: Tradable): Long = {
+    uniformRandomVariate(ticker.get.head.askPrice, config.maxBidPrice)
   }
 
 }

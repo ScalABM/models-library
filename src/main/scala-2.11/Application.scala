@@ -10,11 +10,9 @@ import markets.orders.orderings.ask.AskPriceTimeOrdering
 import markets.orders.orderings.bid.BidPriceTimeOrdering
 import markets.tickers.Tick
 import markets.tradables.{Security, Tradable}
-import strategies.placement.PoissonOrderPlacementStrategy
 
 import scala.collection.{mutable, immutable}
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 
 
@@ -33,6 +31,8 @@ object Application extends App {
 
   // Create some tickers...
   val model = ActorSystem("model", config)
+  import model.dispatcher
+
   val counter = Agent[Int](0)
 
   val numberRoutees = config.getInt("settlement.numberRoutees")
@@ -40,8 +40,8 @@ object Application extends App {
 
   // create some tickers
   val tickers = securities.map {
-    security => security -> Agent(Tick(1, 1, Some(1), 1, 1))
-  } (collection.breakOut): mutable.Map[Tradable, Agent[Tick]]
+    security => security -> Agent(immutable.Seq.empty[Tick])
+  } (collection.breakOut): mutable.Map[Tradable, Agent[immutable.Seq[Tick]]]
 
   // Create some markets
   val referencePrice = config.getLong("market.referencePrice")
