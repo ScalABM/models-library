@@ -17,7 +17,7 @@ fork in run := true
 
 javaOptions ++= Seq(
   "-Xmn3G",
-  "-Xmx4G",
+  "-Xmx6G",
   //"-XX:+UseG1GC",
   "-XX:+UseNUMA",
   "-XX:+UseCondCardMark",
@@ -30,3 +30,4 @@ javaOptions ++= Seq(
 // Specify Docker options
 enablePlugins(JavaAppPackaging, DockerPlugin)
 maintainer in Docker := "davidrpugh <david.pugh@maths.ox.ac.uk>"
+dockerRepository := Some("davidrpugh")
