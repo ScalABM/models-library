@@ -1,6 +1,8 @@
 import akka.actor.{PoisonPill, ActorRef, ActorSystem}
 import akka.agent.Agent
 
+import java.io.PrintWriter
+
 import Reaper.WatchMe
 import actors.{ZILiquidityMarketMaker, RandomTraderConfig}
 import com.typesafe.config.ConfigFactory
@@ -10,6 +12,7 @@ import markets.orders.orderings.ask.AskPriceTimeOrdering
 import markets.orders.orderings.bid.BidPriceTimeOrdering
 import markets.tickers.Tick
 import markets.tradables.{Security, Tradable}
+import play.api.libs.json.{Json, JsValue}
 
 import scala.collection.{mutable, immutable}
 import scala.concurrent.duration._
@@ -17,6 +20,19 @@ import scala.util.Random
 
 
 object Application extends App {
+
+  def convertTicksToJson(ticks: immutable.Seq[Tick]): JsValue = {
+    Json.toJson(
+      ticks.map { tick => immutable.Map("askPrice" -> tick.askPrice, "bidPrice" -> tick.bidPrice,
+        "price" -> tick.price, "quantity" -> tick.quantity, "timestamp" -> tick.timestamp)
+      })
+  }
+
+  def writeTicksToFile(json: JsValue, path: String): Unit = {
+    val target = new PrintWriter(path)
+    target.write(json.toString())
+    target.close()
+  }
 
   val config = ConfigFactory.load()
 
@@ -54,8 +70,10 @@ object Application extends App {
 
   // Create some traders
   val numberTraders = config.getInt("traders.number")
+  //val traderType = config.getString("traders.type")
   val traderConfig = new RandomTraderConfig(config.getConfig("traders.params"))
   val traders = immutable.IndexedSeq.fill(numberTraders) {
+    //model.actorOf(Class.forName(traderType).asInstanceOf[Actor]
     model.actorOf(ZILiquidityMarketMaker.props(traderConfig, markets, prng, tickers))
   }
 
@@ -68,6 +86,11 @@ object Application extends App {
   reaper ! WatchMe(settlementMechanism)
 
   model.scheduler.scheduleOnce(1.minute) {
+    tickers.foreach {
+      case (tradable, ticker) =>
+        val jsonTicks = convertTicksToJson(ticker.get)
+        writeTicksToFile(jsonTicks, "./data/" + tradable.symbol + ".json")
+    }
     traders.foreach(trader => trader ! PoisonPill)
     markets.foreach {
       case (tradable: Tradable, market: ActorRef) => market ! PoisonPill
