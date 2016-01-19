@@ -19,11 +19,15 @@ class PassiveLimitOrderTradingStrategy(config: RandomTraderConfig, prng: Random)
   extends ZILimitOrderTradingStrategy(config, prng) {
 
   override def askPrice(ticker: Agent[immutable.Seq[Tick]], tradable: Tradable): Long = {
-    uniformRandomVariate(ticker.get.head.bidPrice, config.maxAskPrice)
+    logUniformRandomVariate(math.log(ticker.get.head.bidPrice), math.log(Long.MaxValue))
   }
 
   override def bidPrice(ticker: Agent[immutable.Seq[Tick]], tradable: Tradable): Long = {
-    uniformRandomVariate(ticker.get.head.askPrice, config.maxBidPrice)
+    logUniformRandomVariate(math.log(config.minBidPrice), math.log(ticker.get.head.askPrice))
+  }
+
+  protected def logUniformRandomVariate(lower: Double, upper: Double): Long = {
+    math.exp(lower + (upper - lower) * prng.nextDouble()).toLong
   }
 
 }
