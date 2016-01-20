@@ -17,7 +17,7 @@
 import akka.actor.{Props, PoisonPill, ActorRef, ActorSystem}
 import akka.agent.Agent
 
-import actors.{SimpleSettlementMechanismActor, RandomTraderConfig, ZILiquiditySupplier}
+import actors.{SimpleSettlementMechanismActor, ZILiquiditySupplierConfig, ZILiquiditySupplier}
 import com.typesafe.config.ConfigFactory
 import markets.MarketActor
 import markets.engines.CDAMatchingEngine
@@ -66,9 +66,10 @@ object GodeSunderApp extends App with BaseApp {
 
   // Create some traders
   val numberTraders = config.getInt("traders.number")
-  val traderConfig = new RandomTraderConfig(config.getConfig("traders.params"))
+  val traderConfig = new ZILiquiditySupplierConfig(config.getConfig("traders.params"))
   val traders = immutable.IndexedSeq.fill(numberTraders) {
-    model.actorOf(ZILiquiditySupplier.props(traderConfig, markets, prng, tickers))
+    val props = ZILiquiditySupplier.props(traderConfig, markets, prng, tickers)
+    model.actorOf(props.withDispatcher("traders.dispatcher"))
   }
 
   // Initialize the Reaper
@@ -80,16 +81,16 @@ object GodeSunderApp extends App with BaseApp {
   reaper ! WatchMe(settlementMechanism)
 
   model.scheduler.scheduleOnce(1.minute) {
-    tickers.foreach {
-      case (tradable, ticker) =>
-        val jsonTicks = convertTicksToJson(ticker.get)
-        writeTicksToFile(jsonTicks, path + tradable.symbol + ".json")
-    }
     traders.foreach(trader => trader ! PoisonPill)
     markets.foreach {
       case (tradable: Tradable, market: ActorRef) => market ! PoisonPill
     }
     settlementMechanism ! PoisonPill
+    tickers.foreach {
+      case (tradable, ticker) =>
+        val jsonTicks = convertTicksToJson(ticker.get)
+        writeTicksToFile(jsonTicks, path + tradable.symbol + ".json")
+    }
   }(model.dispatcher)
 
 }
