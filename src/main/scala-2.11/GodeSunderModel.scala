@@ -1,10 +1,26 @@
+/*
+ Copyright 2016 David R. Pugh
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+ */
 import akka.actor.{PoisonPill, ActorRef, ActorSystem}
 import akka.agent.Agent
 
 import java.io.PrintWriter
 
 import Reaper.WatchMe
-import actors.{ZILiquidityDemander, PassiveLiquiditySupplier, RandomTraderConfig}
+import actors.{RandomTraderConfig, ZILiquiditySupplier}
 import com.typesafe.config.ConfigFactory
 import markets.MarketActor
 import markets.engines.CDAMatchingEngine
@@ -19,7 +35,7 @@ import scala.concurrent.duration._
 import scala.util.Random
 
 
-object FarmerEtAlModel extends App {
+object GodeSunderModel extends App {
 
   def convertTicksToJson(ticks: immutable.Seq[Tick]): JsValue = {
     Json.toJson(
@@ -34,14 +50,14 @@ object FarmerEtAlModel extends App {
     target.close()
   }
 
-  val config = ConfigFactory.load("farmerEtAlModel.conf")
+  val config = ConfigFactory.load("godeSunderModel.conf")
 
   // set the seed
   val prng = new Random(42)
 
   // Create some tradable tradables...
   val numberTradables = config.getInt("markets.number")
-  val securities = immutable.Seq.fill[Tradable](numberTradables){
+  val tradables = immutable.Seq.fill[Tradable](numberTradables){
     Security(prng.alphanumeric.take(4).mkString)
   }
 
@@ -55,7 +71,7 @@ object FarmerEtAlModel extends App {
   val settlementMechanism = model.actorOf(SettlementRouter.props(counter, numberRoutees))
 
   // create some tickers
-  val tickers = securities.map {
+  val tickers = tradables.map {
     security => security -> Agent(immutable.Seq.empty[Tick])
   } (collection.breakOut): mutable.Map[Tradable, Agent[immutable.Seq[Tick]]]
 
@@ -63,24 +79,17 @@ object FarmerEtAlModel extends App {
   val referencePrice = config.getLong("markets.referencePrice")
   val matchingEngine = CDAMatchingEngine(AskPriceTimeOrdering, BidPriceTimeOrdering, referencePrice)
 
-  val markets = securities.map { security =>
+  val markets = tradables.map { security =>
     val props = MarketActor.props(matchingEngine, settlementMechanism, tickers(security), security)
     security -> model.actorOf(props.withDispatcher("markets.dispatcher"))
   } (collection.breakOut): mutable.Map[Tradable, ActorRef]
 
   // Create some traders
-  val numberAggressive = config.getInt("traders.numberAggressive")
-  val numberPassive = config.getInt("traders.numberPassive")
+  val numberTraders = config.getInt("traders.number")
   val traderConfig = new RandomTraderConfig(config.getConfig("traders.params"))
-  val aggressiveTraders = immutable.IndexedSeq.fill(numberAggressive) {
-    val props = ZILiquidityDemander.props(traderConfig, markets, prng, tickers)
-    model.actorOf(props.withDispatcher("traders.dispatcher"))
+  val traders = immutable.IndexedSeq.fill(numberTraders) {
+    model.actorOf(ZILiquiditySupplier.props(traderConfig, markets, prng, tickers))
   }
-  val passiveTraders = immutable.IndexedSeq.fill(numberPassive) {
-    val props = PassiveLiquiditySupplier.props(traderConfig, markets, prng, tickers)
-    model.actorOf(props.withDispatcher("traders.dispatcher"))
-  }
-  val traders = aggressiveTraders ++ passiveTraders
 
   // Initialize the reaper
   val reaper = model.actorOf(ProductionReaper.props(counter))
@@ -90,17 +99,17 @@ object FarmerEtAlModel extends App {
   traders.foreach(trader => reaper ! WatchMe(trader))
   reaper ! WatchMe(settlementMechanism)
 
-  model.scheduler.scheduleOnce(1.minutes) {
+  model.scheduler.scheduleOnce(1.minute) {
+    tickers.foreach {
+      case (tradable, ticker) =>
+        val jsonTicks = convertTicksToJson(ticker.get)
+        writeTicksToFile(jsonTicks, "./data/gode-sunder-model/" + tradable.symbol + ".json")
+    }
     traders.foreach(trader => trader ! PoisonPill)
     markets.foreach {
       case (tradable: Tradable, market: ActorRef) => market ! PoisonPill
     }
     settlementMechanism ! PoisonPill
     println(counter.get)
-    tickers.foreach {
-      case (tradable, ticker) =>
-        val jsonTicks = convertTicksToJson(ticker.get)
-        writeTicksToFile(jsonTicks, "./data/farmer-et-al-model/" + tradable.symbol + ".json")
-    }
   }
 }
