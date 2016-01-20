@@ -4,7 +4,7 @@ import akka.agent.Agent
 import java.io.PrintWriter
 
 import Reaper.WatchMe
-import actors.{ZILiquidityMarketMaker, RandomTraderConfig}
+import actors.{ZILiquidityDemander, PassiveLiquiditySupplier, RandomTraderConfig}
 import com.typesafe.config.ConfigFactory
 import markets.MarketActor
 import markets.engines.CDAMatchingEngine
@@ -19,7 +19,7 @@ import scala.concurrent.duration._
 import scala.util.Random
 
 
-object Application extends App {
+object FarmerEtAlModel extends App {
 
   def convertTicksToJson(ticks: immutable.Seq[Tick]): JsValue = {
     Json.toJson(
@@ -39,8 +39,8 @@ object Application extends App {
   // set the seed
   val prng = new Random(42)
 
-  // Create some tradable securities...
-  val numberTradables = config.getInt("tradables.number")
+  // Create some tradable tradables...
+  val numberTradables = config.getInt("markets.number")
   val securities = immutable.Seq.fill[Tradable](numberTradables){
     Security(prng.alphanumeric.take(4).mkString)
   }
@@ -51,7 +51,7 @@ object Application extends App {
 
   val counter = Agent[Int](0)
 
-  val numberRoutees = config.getInt("settlement.numberRoutees")
+  val numberRoutees = config.getInt("markets.settlement.numberRoutees")
   val settlementMechanism = model.actorOf(SettlementRouter.props(counter, numberRoutees))
 
   // create some tickers
@@ -60,22 +60,28 @@ object Application extends App {
   } (collection.breakOut): mutable.Map[Tradable, Agent[immutable.Seq[Tick]]]
 
   // Create some markets
-  val referencePrice = config.getLong("market.referencePrice")
+  val referencePrice = config.getLong("markets.referencePrice")
   val matchingEngine = CDAMatchingEngine(AskPriceTimeOrdering, BidPriceTimeOrdering, referencePrice)
 
   val markets = securities.map { security =>
     val props = MarketActor.props(matchingEngine, settlementMechanism, tickers(security), security)
-    security -> model.actorOf(props.withDispatcher("market-dispatcher"))
+    security -> model.actorOf(props.withDispatcher("markets.dispatcher"))
   } (collection.breakOut): mutable.Map[Tradable, ActorRef]
 
   // Create some traders
-  val numberTraders = config.getInt("traders.number")
+  val numberAggressive = config.getInt("traders.numberAggressive")
+  val numberPassive = config.getInt("traders.numberPassive")
   //val traderType = config.getString("traders.type")
   val traderConfig = new RandomTraderConfig(config.getConfig("traders.params"))
-  val traders = immutable.IndexedSeq.fill(numberTraders) {
+  val aggressiveTraders = immutable.IndexedSeq.fill(numberAggressive) {
     //model.actorOf(Class.forName(traderType).asInstanceOf[Actor]
-    model.actorOf(ZILiquidityMarketMaker.props(traderConfig, markets, prng, tickers))
+    model.actorOf(ZILiquidityDemander.props(traderConfig, markets, prng, tickers))
   }
+  val passiveTraders = immutable.IndexedSeq.fill(numberPassive) {
+    //model.actorOf(Class.forName(traderType).asInstanceOf[Actor]
+    model.actorOf(PassiveLiquiditySupplier.props(traderConfig, markets, prng, tickers))
+  }
+  val traders = aggressiveTraders ++ passiveTraders
 
   // Initialize the reaper
   val reaper = model.actorOf(ProductionReaper.props(counter))
@@ -85,7 +91,7 @@ object Application extends App {
   traders.foreach(trader => reaper ! WatchMe(trader))
   reaper ! WatchMe(settlementMechanism)
 
-  model.scheduler.scheduleOnce(1.minute) {
+  model.scheduler.scheduleOnce(10.seconds) {
     tickers.foreach {
       case (tradable, ticker) =>
         val jsonTicks = convertTicksToJson(ticker.get)
