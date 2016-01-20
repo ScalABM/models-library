@@ -6,9 +6,12 @@ organization := "com.github.ScalABM"
 
 scalaVersion := "2.11.7"
 
+resolvers += "Typesafe Repo" at "http://repo.typesafe.com/typesafe/releases/"
+
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-agent" % "2.4.1",
   "com.typesafe.akka" %% "akka-slf4j" % "2.4.1",
+  "com.typesafe.play" %% "play-json" % "2.4.6",
   "ch.qos.logback" % "logback-classic" % "1.1.3",
   "com.github.ScalABM" %% "markets-sandbox" % "0.1.0-alpha-SNAPSHOT"
 )
