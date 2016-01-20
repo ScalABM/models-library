@@ -14,13 +14,10 @@
  limitations under the License.
 
  */
-import akka.actor.{PoisonPill, ActorRef, ActorSystem}
+import akka.actor.{Props, PoisonPill, ActorRef, ActorSystem}
 import akka.agent.Agent
 
-import java.io.PrintWriter
-
-import Reaper.WatchMe
-import actors.{RandomTraderConfig, ZILiquiditySupplier}
+import actors.{SimpleSettlementMechanismActor, RandomTraderConfig, ZILiquiditySupplier}
 import com.typesafe.config.ConfigFactory
 import markets.MarketActor
 import markets.engines.CDAMatchingEngine
@@ -28,57 +25,40 @@ import markets.orders.orderings.ask.AskPriceTimeOrdering
 import markets.orders.orderings.bid.BidPriceTimeOrdering
 import markets.tickers.Tick
 import markets.tradables.{Security, Tradable}
-import play.api.libs.json.{Json, JsValue}
 
 import scala.collection.{mutable, immutable}
 import scala.concurrent.duration._
 import scala.util.Random
 
 
-object GodeSunderModel extends App {
-
-  def convertTicksToJson(ticks: immutable.Seq[Tick]): JsValue = {
-    Json.toJson(
-      ticks.map { tick => immutable.Map("askPrice" -> tick.askPrice, "bidPrice" -> tick.bidPrice,
-        "price" -> tick.price, "quantity" -> tick.quantity, "timestamp" -> tick.timestamp)
-      })
-  }
-
-  def writeTicksToFile(json: JsValue, path: String): Unit = {
-    val target = new PrintWriter(path)
-    target.write(json.toString())
-    target.close()
-  }
+object GodeSunderApp extends App with BaseApp {
 
   val config = ConfigFactory.load("godeSunderModel.conf")
 
-  // set the seed
+  val model = ActorSystem("gode-sunder-model", config)
+
+  val path: String = "./data/gode-sunder-model/"
+
   val prng = new Random(42)
 
-  // Create some tradable tradables...
-  val numberTradables = config.getInt("markets.number")
-  val tradables = immutable.Seq.fill[Tradable](numberTradables){
+  // Create some tradable Securities...
+  val numberMarkets = config.getInt("markets.number")
+  val tradables = immutable.Seq.fill[Tradable](numberMarkets){
     Security(prng.alphanumeric.take(4).mkString)
   }
 
-  // Create some tickers...
-  val model = ActorSystem("model", config)
-  import model.dispatcher
+  // Create a simple settlement mechanism
+  val settlementProps = Props[SimpleSettlementMechanismActor]
+  val settlementMechanism = model.actorOf(settlementProps, "settlement-mechanism")
 
-  val counter = Agent[Int](0)
-
-  val numberRoutees = config.getInt("markets.settlement.numberRoutees")
-  val settlementMechanism = model.actorOf(SettlementRouter.props(counter, numberRoutees))
-
-  // create some tickers
+  // Create a collection of tickers (one for each tradable security)
   val tickers = tradables.map {
-    security => security -> Agent(immutable.Seq.empty[Tick])
+    security => security -> Agent(immutable.Seq.empty[Tick])(model.dispatcher)
   } (collection.breakOut): mutable.Map[Tradable, Agent[immutable.Seq[Tick]]]
 
-  // Create some markets
+  // Create a collection of markets (one for each tradable security)
   val referencePrice = config.getLong("markets.referencePrice")
   val matchingEngine = CDAMatchingEngine(AskPriceTimeOrdering, BidPriceTimeOrdering, referencePrice)
-
   val markets = tradables.map { security =>
     val props = MarketActor.props(matchingEngine, settlementMechanism, tickers(security), security)
     security -> model.actorOf(props.withDispatcher("markets.dispatcher"))
@@ -91,8 +71,8 @@ object GodeSunderModel extends App {
     model.actorOf(ZILiquiditySupplier.props(traderConfig, markets, prng, tickers))
   }
 
-  // Initialize the reaper
-  val reaper = model.actorOf(ProductionReaper.props(counter))
+  // Initialize the Reaper
+  val reaper = model.actorOf(Props[Reaper])
   markets.foreach {
     case (tradable: Tradable, market: ActorRef) => reaper ! WatchMe(market)
   }
@@ -103,13 +83,13 @@ object GodeSunderModel extends App {
     tickers.foreach {
       case (tradable, ticker) =>
         val jsonTicks = convertTicksToJson(ticker.get)
-        writeTicksToFile(jsonTicks, "./data/gode-sunder-model/" + tradable.symbol + ".json")
+        writeTicksToFile(jsonTicks, path + tradable.symbol + ".json")
     }
     traders.foreach(trader => trader ! PoisonPill)
     markets.foreach {
       case (tradable: Tradable, market: ActorRef) => market ! PoisonPill
     }
     settlementMechanism ! PoisonPill
-    println(counter.get)
-  }
+  }(model.dispatcher)
+
 }
