@@ -15,7 +15,7 @@ import scala.concurrent.duration.Duration
 import scala.util.Random
 
 
-case class PassiveLiquiditySupplier(config: RandomTraderConfig,
+case class PassiveLiquiditySupplier(config: PassiveLiquiditySupplierConfig,
                                     markets: mutable.Map[Tradable, ActorRef],
                                     prng: Random,
                                     tickers: mutable.Map[Tradable, Agent[immutable.Seq[Tick]]])
@@ -29,7 +29,7 @@ case class PassiveLiquiditySupplier(config: RandomTraderConfig,
 
   // possible insert this into post-start life-cycle hook?
   import context.dispatcher
-  val initialDelay = Duration.Zero
+  val initialDelay = orderPlacementStrategy.waitTime(config.alpha)
   val limitOrderInterval = orderPlacementStrategy.waitTime(config.alpha)
   orderPlacementStrategy.schedule(initialDelay, limitOrderInterval, self, SubmitLimitAskOrder)
   orderPlacementStrategy.schedule(initialDelay, limitOrderInterval, self, SubmitLimitBidOrder)
@@ -39,7 +39,7 @@ case class PassiveLiquiditySupplier(config: RandomTraderConfig,
 
 object PassiveLiquiditySupplier {
 
-  def props(config: RandomTraderConfig,
+  def props(config: PassiveLiquiditySupplierConfig,
             markets: mutable.Map[Tradable, ActorRef],
             prng: Random,
             tickers: mutable.Map[Tradable, Agent[immutable.Seq[Tick]]]): Props = {

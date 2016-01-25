@@ -16,7 +16,7 @@ import scala.concurrent.duration.Duration
 import scala.util.Random
 
 
-case class ZILiquidityMarketMaker(config: RandomTraderConfig,
+case class ZILiquidityMarketMaker(config: ZILiquidityMarketMakerConfig,
                                   markets: mutable.Map[Tradable, ActorRef],
                                   prng: Random,
                                   tickers: mutable.Map[Tradable, Agent[immutable.Seq[Tick]]])
@@ -50,7 +50,7 @@ case class ZILiquidityMarketMaker(config: RandomTraderConfig,
 
 object ZILiquidityMarketMaker {
 
-  def props(config: RandomTraderConfig,
+  def props(config: ZILiquidityMarketMakerConfig,
             markets: mutable.Map[Tradable, ActorRef],
             prng: Random,
             tickers: mutable.Map[Tradable, Agent[immutable.Seq[Tick]]]): Props = {

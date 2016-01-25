@@ -11,11 +11,10 @@ import strategies.placement.PoissonOrderPlacementStrategy
 import strategies.trading.ZIMarketOrderTradingStrategy
 
 import scala.collection.{immutable, mutable}
-import scala.concurrent.duration.Duration
 import scala.util.Random
 
 
-case class ZILiquidityDemander(config: RandomTraderConfig,
+case class ZILiquidityDemander(config: RandomLiquidityDemanderConfig,
                                markets: mutable.Map[Tradable, ActorRef],
                                prng: Random,
                                tickers: mutable.Map[Tradable, Agent[immutable.Seq[Tick]]])
@@ -29,17 +28,17 @@ case class ZILiquidityDemander(config: RandomTraderConfig,
 
   // possible insert this into post-start life-cycle hook?
   import context.dispatcher
-  val initialDelay = Duration.Zero
-  val limitOrderInterval = orderPlacementStrategy.waitTime(config.alpha)
-  orderPlacementStrategy.schedule(initialDelay, limitOrderInterval, self, SubmitMarketAskOrder)
-  orderPlacementStrategy.schedule(initialDelay, limitOrderInterval, self, SubmitMarketBidOrder)
+  val initialDelay = orderPlacementStrategy.waitTime(config.mu)
+  val marketOrderInterval = orderPlacementStrategy.waitTime(config.mu)
+  orderPlacementStrategy.schedule(initialDelay, marketOrderInterval, self, SubmitMarketAskOrder)
+  orderPlacementStrategy.schedule(initialDelay, marketOrderInterval, self, SubmitMarketBidOrder)
 
 }
 
 
 object ZILiquidityDemander {
 
-  def props(config: RandomTraderConfig,
+  def props(config: RandomLiquidityDemanderConfig,
             markets: mutable.Map[Tradable, ActorRef],
             prng: Random,
             tickers: mutable.Map[Tradable, Agent[immutable.Seq[Tick]]]): Props = {

@@ -1,8 +1,23 @@
-import akka.actor.{PoisonPill, ActorRef, Props, ActorSystem}
+/*
+ Copyright 2016 David R. Pugh
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+ */
+import akka.actor.{Props, PoisonPill, ActorRef, ActorSystem}
 import akka.agent.Agent
 
-
-import actors.{PassiveLiquiditySupplierConfig, ZILiquidityDemanderConfig, SimpleSettlementMechanismActor, ZILiquidityDemander, PassiveLiquiditySupplier}
+import actors.{ZILiquidityMarketMakerConfig, ZILiquidityMarketMaker, SimpleSettlementMechanismActor}
 import com.typesafe.config.ConfigFactory
 import markets.MarketActor
 import markets.engines.CDAMatchingEngine
@@ -16,13 +31,13 @@ import scala.concurrent.duration._
 import scala.util.Random
 
 
-object FarmerEtAlApp extends BaseApp with App {
+object TestApp extends App with BaseApp {
 
-  val config = ConfigFactory.load("farmerEtAlModel.conf")
+  val config = ConfigFactory.load("test.conf")
 
-  val model = ActorSystem("farmer-et-al-model", config)
+  val model = ActorSystem("test-model", config)
 
-  val path: String = "./data/farmer-et-al-model/"
+  val path: String = "./data/test-model/"
 
   val prng = new Random(42)
 
@@ -50,20 +65,12 @@ object FarmerEtAlApp extends BaseApp with App {
   } (collection.breakOut): mutable.Map[Tradable, ActorRef]
 
   // Create some traders
-  val numberAggressive = config.getInt("traders.numberAggressive")
-  val numberPassive = config.getInt("traders.numberPassive")
-  val aggressiveTraderConfig = new ZILiquidityDemanderConfig(config.getConfig("traders.params"))
-  val aggressiveTraders = immutable.IndexedSeq.fill(numberAggressive) {
-    val props = ZILiquidityDemander.props(aggressiveTraderConfig, markets, prng, tickers)
+  val numberTraders = config.getInt("traders.number")
+  val traderConfig = new ZILiquidityMarketMakerConfig(config.getConfig("traders.params"))
+  val traders = immutable.IndexedSeq.fill(numberTraders) {
+    val props = ZILiquidityMarketMaker.props(traderConfig, markets, prng, tickers)
     model.actorOf(props.withDispatcher("traders.dispatcher"))
   }
-
-  val passiveTraderConfig = new PassiveLiquiditySupplierConfig(config.getConfig("traders.params"))
-  val passiveTraders = immutable.IndexedSeq.fill(numberPassive) {
-    val props = PassiveLiquiditySupplier.props(passiveTraderConfig, markets, prng, tickers)
-    model.actorOf(props.withDispatcher("traders.dispatcher"))
-  }
-  val traders = aggressiveTraders ++ passiveTraders
 
   // Initialize the Reaper
   val reaper = model.actorOf(Props[Reaper])
@@ -74,16 +81,16 @@ object FarmerEtAlApp extends BaseApp with App {
   reaper ! WatchMe(settlementMechanism)
 
   model.scheduler.scheduleOnce(1.minute) {
-    tickers.foreach {
-      case (tradable, ticker) =>
-        val jsonTicks = convertTicksToJson(ticker.get)
-        writeTicksToFile(jsonTicks, path + tradable.symbol + ".json")
-    }
     traders.foreach(trader => trader ! PoisonPill)
     markets.foreach {
       case (tradable: Tradable, market: ActorRef) => market ! PoisonPill
     }
     settlementMechanism ! PoisonPill
+    tickers.foreach {
+      case (tradable, ticker) =>
+        val jsonTicks = convertTicksToJson(ticker.get)
+        writeTicksToFile(jsonTicks, path + tradable.symbol + ".json")
+    }
   }(model.dispatcher)
 
 }

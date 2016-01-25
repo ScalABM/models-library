@@ -2,7 +2,7 @@ package strategies.trading
 
 import akka.agent.Agent
 
-import actors.RandomTraderConfig
+import actors.RandomLiquidityDemanderConfig
 import markets.tickers.Tick
 import markets.tradables.Tradable
 
@@ -11,7 +11,7 @@ import scala.util.Random
 
 
 /** Zero Intelligence (ZI) market order trading strategy from Gode and Sunder, JPE (1996). */
-case class ZIMarketOrderTradingStrategy(config: RandomTraderConfig, prng: Random)
+case class ZIMarketOrderTradingStrategy(config: RandomLiquidityDemanderConfig, prng: Random)
   extends RandomMarketOrderTradingStrategy {
 
   def askQuantity(ticker: Agent[immutable.Seq[Tick]], tradable: Tradable): Long = {

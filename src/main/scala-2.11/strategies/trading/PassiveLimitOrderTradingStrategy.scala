@@ -2,7 +2,7 @@ package strategies.trading
 
 import akka.agent.Agent
 
-import actors.RandomTraderConfig
+import actors.{RandomLiquiditySupplierConfig, RandomMarketParticipantConfig}
 import markets.tickers.Tick
 import markets.tradables.Tradable
 
@@ -15,7 +15,7 @@ import scala.util.Random
   *       prices and then places its next limit order in an attempt to insure that the order
   *       rests in the book (rather than executing immediately).
   */
-class PassiveLimitOrderTradingStrategy(config: RandomTraderConfig, prng: Random)
+class PassiveLimitOrderTradingStrategy(config: RandomLiquiditySupplierConfig, prng: Random)
   extends ZILimitOrderTradingStrategy(config, prng) {
 
   override def askPrice(ticker: Agent[immutable.Seq[Tick]], tradable: Tradable): Long = {
@@ -43,7 +43,7 @@ class PassiveLimitOrderTradingStrategy(config: RandomTraderConfig, prng: Random)
 
 object PassiveLimitOrderTradingStrategy {
 
-  def apply(config: RandomTraderConfig, prng: Random): PassiveLimitOrderTradingStrategy = {
+  def apply(config: RandomLiquiditySupplierConfig, prng: Random): PassiveLimitOrderTradingStrategy = {
     new PassiveLimitOrderTradingStrategy(config, prng)
   }
 
