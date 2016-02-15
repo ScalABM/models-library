@@ -37,7 +37,7 @@ object GodeSunderApp extends App with BaseApp {
 
   val model = ActorSystem("gode-sunder-model", config)
 
-  val path: String = "./data/gode-sunder-model/"
+  val path: String = "./data/"
 
   val prng = new Random(42)
 
@@ -66,7 +66,7 @@ object GodeSunderApp extends App with BaseApp {
 
   // Create some traders
   val numberTraders = config.getInt("traders.number")
-  val traderConfig = new ZILiquiditySupplierConfig(config.getConfig("traders.params"))
+  val traderConfig = ZILiquiditySupplierConfig(config.getConfig("traders.params"))
   val traders = immutable.IndexedSeq.fill(numberTraders) {
     val props = ZILiquiditySupplier.props(traderConfig, markets, prng, tickers)
     model.actorOf(props.withDispatcher("traders.dispatcher"))

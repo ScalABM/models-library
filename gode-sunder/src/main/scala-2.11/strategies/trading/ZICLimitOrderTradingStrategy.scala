@@ -2,7 +2,7 @@ package strategies.trading
 
 import akka.agent.Agent
 
-import actors.{RandomLiquiditySupplierConfig, RandomMarketParticipantConfig}
+import actors.ZILiquiditySupplierConfig
 import markets.tickers.Tick
 import markets.tradables.Tradable
 
@@ -11,7 +11,7 @@ import scala.util.Random
 
 
 /** Zero Intelligence (Constrained) behavior as defined by Gode and Sunder, JPE (1993). */
-class ZICLimitOrderTradingStrategy(config: RandomLiquiditySupplierConfig,
+class ZICLimitOrderTradingStrategy(config: ZILiquiditySupplierConfig,
                                    prng: Random,
                                    valuations: mutable.Map[Tradable, Long])
   extends ZILimitOrderTradingStrategy(config, prng) {
