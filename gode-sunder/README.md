@@ -1,2 +1,2 @@
 # Gode and Sunder JPE 1993
-Model replicates the seminal Gode and Sunder "Zero Intelligence" agent paper.
+Model replicates the results from the seminal [Gode and Sunder (JPE, 1993)](http://www2.econ.iastate.edu/tesfatsi/Gode%20and%20Sunder-JPE.pdf) "Zero Intelligence" agent paper.
