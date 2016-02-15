@@ -3,9 +3,9 @@ package actors
 import com.typesafe.config.Config
 
 
-trait RandomMarketParticipantConfig {
+case class ZILiquiditySupplierConfig(config: Config) {
 
-  def config: Config
+  val alpha = config.getDouble("limitOrderArrivalRate")
 
   val delta = config.getDouble("orderCancellationArrivalRate")
 

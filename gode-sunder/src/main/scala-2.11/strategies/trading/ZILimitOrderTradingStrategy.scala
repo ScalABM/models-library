@@ -2,7 +2,7 @@ package strategies.trading
 
 import akka.agent.Agent
 
-import actors.RandomLiquiditySupplierConfig
+import actors.ZILiquiditySupplierConfig
 import markets.tickers.Tick
 import markets.tradables.Tradable
 
@@ -11,7 +11,7 @@ import scala.util.Random
 
 
 /** Zero Intelligence (ZI) limit order trading strategy from Gode and Sunder, JPE (1996). */
-class ZILimitOrderTradingStrategy(val config: RandomLiquiditySupplierConfig, val prng: Random)
+class ZILimitOrderTradingStrategy(val config: ZILiquiditySupplierConfig, val prng: Random)
   extends RandomLimitOrderTradingStrategy {
 
   def askPrice(ticker: Agent[immutable.Seq[Tick]], tradable: Tradable): Long = {
@@ -43,7 +43,7 @@ class ZILimitOrderTradingStrategy(val config: RandomLiquiditySupplierConfig, val
 
 object ZILimitOrderTradingStrategy {
 
-  def apply(config: RandomLiquiditySupplierConfig, prng: Random): ZILimitOrderTradingStrategy = {
+  def apply(config: ZILiquiditySupplierConfig, prng: Random): ZILimitOrderTradingStrategy = {
     new ZILimitOrderTradingStrategy(config, prng)
   }
 
