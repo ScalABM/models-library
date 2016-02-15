@@ -13,27 +13,17 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import akka.actor.{Props, Actor, ActorRef, Terminated}
-import akka.agent.Agent
+import akka.actor.{Actor, ActorRef, Terminated}
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable
 
-object Reaper {
-  // Used by others to register an Actor for watching
-  case class WatchMe(ref: ActorRef)
-}
 
-abstract class Reaper extends Actor {
-  import Reaper._
+class Reaper extends Actor {
 
-  // Keep track of what we're watching
-  val watched = ArrayBuffer.empty[ActorRef]
+  def allSoulsReaped(): Unit = {
+    context.system.terminate()
+  }
 
-  // Derivations need to implement this method.  It's the
-  // hook that's called when everything's dead
-  def allSoulsReaped(): Unit
-
-  // Watch and check for termination
   final def receive = {
     case WatchMe(ref) =>
       context.watch(ref)
@@ -42,20 +32,7 @@ abstract class Reaper extends Actor {
       watched -= ref
       if (watched.isEmpty) allSoulsReaped()
   }
-}
 
-class ProductionReaper(val counter: Agent[Int]) extends Reaper {
+  private[this] val watched = mutable.ArrayBuffer.empty[ActorRef]
 
-  def allSoulsReaped(): Unit = {
-    println(counter())
-    context.system.terminate()
-  }
-}
-
-
-object ProductionReaper {
-
-  def props(counter: Agent[Int]): Props = {
-    Props(new ProductionReaper(counter))
-  }
 }

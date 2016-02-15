@@ -11,16 +11,15 @@ import strategies.cancellation.RandomOrderCancellationStrategy
 import strategies.placement.PoissonOrderPlacementStrategy
 import strategies.trading.{ZIMarketOrderTradingStrategy, ZILimitOrderTradingStrategy}
 
-import scala.collection.mutable
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.collection.{immutable, mutable}
 import scala.concurrent.duration.Duration
 import scala.util.Random
 
 
-case class ZILiquidityMarketMaker(config: RandomTraderConfig,
+case class ZILiquidityMarketMaker(config: ZILiquidityMarketMakerConfig,
                                   markets: mutable.Map[Tradable, ActorRef],
                                   prng: Random,
-                                  tickers: mutable.Map[Tradable, Agent[Tick]])
+                                  tickers: mutable.Map[Tradable, Agent[immutable.Seq[Tick]]])
   extends LiquidityMarketMaker with OrderCanceler {
 
   val limitOrderTradingStrategy = ZILimitOrderTradingStrategy(config, prng)
@@ -34,6 +33,7 @@ case class ZILiquidityMarketMaker(config: RandomTraderConfig,
   val outstandingOrders = mutable.Set.empty[Order]
 
   // possible insert this into post-start life-cycle hook?
+  import context.dispatcher
   val initialDelay = Duration.Zero
   val cancellationInterval = orderPlacementStrategy.waitTime(config.delta)
   val limitOrderInterval = orderPlacementStrategy.waitTime(config.alpha)
@@ -50,10 +50,10 @@ case class ZILiquidityMarketMaker(config: RandomTraderConfig,
 
 object ZILiquidityMarketMaker {
 
-  def props(config: RandomTraderConfig,
+  def props(config: ZILiquidityMarketMakerConfig,
             markets: mutable.Map[Tradable, ActorRef],
             prng: Random,
-            tickers: mutable.Map[Tradable, Agent[Tick]]): Props = {
+            tickers: mutable.Map[Tradable, Agent[immutable.Seq[Tick]]]): Props = {
     Props(new ZILiquidityMarketMaker(config, markets, prng, tickers))
   }
 

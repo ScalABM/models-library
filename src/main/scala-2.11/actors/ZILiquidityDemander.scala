@@ -4,23 +4,23 @@ import akka.actor.{ActorRef, Props}
 import akka.agent.Agent
 
 import markets.orders.Order
-import markets.participants.LiquiditySupplier
+import markets.participants.LiquidityDemander
 import markets.tickers.Tick
 import markets.tradables.Tradable
 import strategies.placement.PoissonOrderPlacementStrategy
-import strategies.trading.ZILimitOrderTradingStrategy
+import strategies.trading.ZIMarketOrderTradingStrategy
 
 import scala.collection.{immutable, mutable}
 import scala.util.Random
 
 
-case class ZILiquiditySupplier(config: ZILiquiditySupplierConfig,
+case class ZILiquidityDemander(config: RandomLiquidityDemanderConfig,
                                markets: mutable.Map[Tradable, ActorRef],
                                prng: Random,
                                tickers: mutable.Map[Tradable, Agent[immutable.Seq[Tick]]])
-  extends LiquiditySupplier {
+  extends LiquidityDemander {
 
-  val limitOrderTradingStrategy = ZILimitOrderTradingStrategy(config, prng)
+  val marketOrderTradingStrategy = ZIMarketOrderTradingStrategy(config, prng)
 
   val orderPlacementStrategy = PoissonOrderPlacementStrategy(prng, context.system.scheduler)
 
@@ -28,20 +28,21 @@ case class ZILiquiditySupplier(config: ZILiquiditySupplierConfig,
 
   // possible insert this into post-start life-cycle hook?
   import context.dispatcher
-  val interval = orderPlacementStrategy.waitTime(config.alpha)
-  orderPlacementStrategy.schedule(interval, interval, self, SubmitLimitAskOrder)
-  orderPlacementStrategy.schedule(interval, interval, self, SubmitLimitBidOrder)
+  val initialDelay = orderPlacementStrategy.waitTime(config.mu)
+  val marketOrderInterval = orderPlacementStrategy.waitTime(config.mu)
+  orderPlacementStrategy.schedule(initialDelay, marketOrderInterval, self, SubmitMarketAskOrder)
+  orderPlacementStrategy.schedule(initialDelay, marketOrderInterval, self, SubmitMarketBidOrder)
 
 }
 
 
-object ZILiquiditySupplier {
+object ZILiquidityDemander {
 
-  def props(config: ZILiquiditySupplierConfig,
+  def props(config: RandomLiquidityDemanderConfig,
             markets: mutable.Map[Tradable, ActorRef],
             prng: Random,
             tickers: mutable.Map[Tradable, Agent[immutable.Seq[Tick]]]): Props = {
-    Props(new ZILiquiditySupplier(config, markets, prng, tickers))
+    Props(new ZILiquidityDemander(config, markets, prng, tickers))
   }
 
 }

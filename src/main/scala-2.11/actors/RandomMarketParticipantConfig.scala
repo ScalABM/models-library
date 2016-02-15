@@ -3,16 +3,11 @@ package actors
 import com.typesafe.config.Config
 
 
-class RandomTraderConfig(config: Config) {
+trait RandomMarketParticipantConfig {
 
-  // arrival rate for limit orders...
-  val alpha = config.getDouble("limitOrderArrivalRate")
+  def config: Config
 
-  // arrival rate for order cancellations...
   val delta = config.getDouble("orderCancellationArrivalRate")
-
-  // arrival rate for market orders...
-  val mu = config.getDouble("marketOrderArrivalRate")
 
   val askOrderProb = config.getDouble("askOrderProbability")
 
