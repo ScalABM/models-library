@@ -80,7 +80,7 @@ object GodeSunderApp extends App with BaseApp {
   traders.foreach(trader => reaper ! WatchMe(trader))
   reaper ! WatchMe(settlementMechanism)
 
-  model.scheduler.scheduleOnce(1.minute) {
+  model.scheduler.scheduleOnce(2.minute) {
     traders.foreach(trader => trader ! PoisonPill)
     markets.foreach {
       case (tradable: Tradable, market: ActorRef) => market ! PoisonPill
