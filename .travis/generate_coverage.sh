@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-echo -e "Running unit tests for gode-sunder example model...\n"
+echo -e "Running unit tests and generating coverage statistics for gode-sunder example model...\n"
 cd ./gode-sunder
 sbt clean coverage test
-echo -e "...completed unit tests for the gode-sunder example model.\n"
+sbt coveralls
+echo -e "...finished running unit tests and generating coverage statistics!\n"
 
