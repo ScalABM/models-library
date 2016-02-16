@@ -1,0 +1,23 @@
+language:
+- scala
+
+scala:
+- 2.11.7
+
+jdk:
+- oraclejdk8
+
+notifications:
+  email: false
+
+branches:
+  only:
+  - master
+  - develop
+
+script:
+- .travis/generate_coverage.sh
+
+after_success:
+- .travis/publish_coverage.sh
+- .travis/publish_docs.sh
