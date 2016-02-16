@@ -1,4 +1,4 @@
-name := "example-model"
+name := "gode-sunder-model"
 
 version := "0.1.0-SNAPSHOT"
 
@@ -6,7 +6,10 @@ organization := "com.github.ScalABM"
 
 scalaVersion := "2.11.7"
 
-resolvers += "Typesafe Repo" at "http://repo.typesafe.com/typesafe/releases/"
+resolvers ++= Seq(
+  "Typesafe Repo" at "https://repo.typesafe.com/typesafe/releases/",
+  "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
+)
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-agent" % "2.4.1",
@@ -29,8 +32,3 @@ javaOptions ++= Seq(
   //"-XX:+PrintGCDetails",
   //"-XX:+PrintGCTimeStamps"
 )
-
-// Specify Docker options
-enablePlugins(JavaAppPackaging, DockerPlugin)
-maintainer in Docker := "davidrpugh <david.pugh@maths.ox.ac.uk>"
-dockerRepository := Some("davidrpugh")

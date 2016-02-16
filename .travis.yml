@@ -15,12 +15,9 @@ branches:
   - master
   - develop
 
-before_script:
-- .travis/publish_docs.sh
-
 script:
-- sbt clean coverage test
+- .travis/generate_coverage.sh
 
 after_success:
-- sbt coveralls
 - .travis/publish_coverage.sh
+- .travis/publish_docs.sh
