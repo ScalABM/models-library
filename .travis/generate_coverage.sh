@@ -4,5 +4,6 @@ echo -e "Running unit tests and generating coverage statistics for gode-sunder e
 cd ./gode-sunder
 sbt clean coverage test
 sbt coveralls
+cd ..
 echo -e "...finished running unit tests and generating coverage statistics!\n"
 
