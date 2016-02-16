@@ -1,4 +1,4 @@
-name := "example-model"
+name := "gode-sunder-model"
 
 version := "0.1.0-SNAPSHOT"
 
@@ -32,8 +32,3 @@ javaOptions ++= Seq(
   //"-XX:+PrintGCDetails",
   //"-XX:+PrintGCTimeStamps"
 )
-
-// Specify Docker options
-enablePlugins(JavaAppPackaging, DockerPlugin)
-maintainer in Docker := "davidrpugh <david.pugh@maths.ox.ac.uk>"
-dockerRepository := Some("davidrpugh")
