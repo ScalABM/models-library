@@ -6,7 +6,10 @@ organization := "com.github.ScalABM"
 
 scalaVersion := "2.11.7"
 
-resolvers += "Typesafe Repo" at "http://repo.typesafe.com/typesafe/releases/"
+resolvers ++= Seq(
+  "Typesafe Repo" at "http://repo.typesafe.com/typesafe/releases/",
+  "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"
+)
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-agent" % "2.4.1",
