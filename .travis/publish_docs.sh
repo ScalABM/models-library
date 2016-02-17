@@ -16,7 +16,7 @@ if [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_BRANCH" == "master" ]; th
 
   # copy over the new docs
   mkdir -p ./docs/gode-sunder/latest
-  cp -Rf ./target/scala-2.11/api/* ./docs/gode-sunder/latest
+  cp -Rf ../target/scala-2.11/api/* ./docs/gode-sunder/latest
 
   # push to github!
   git add ./docs
