@@ -5,7 +5,6 @@ if [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_BRANCH" == "master" ]; th
   echo -e "Generating scaladoc...\n"
   cd ./gode-sunder
   sbt doc
-  cd ..
 
   echo -e "..publishing scaladoc...\n"
 
@@ -15,17 +14,14 @@ if [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_BRANCH" == "master" ]; th
 
   cd gh-pages
 
-  # get rid of old docs
-  git rm -rf ./docs
-
   # copy over the new docs
   mkdir -p ./docs/gode-sunder/latest
-  cp -Rf ../target/scala-2.11/api/* ./docs/gode-sunder/latest
+  cp -Rf ./target/scala-2.11/api/* ./docs/gode-sunder/latest
 
   # push to github!
-  git add -f .
+  git add ./docs
   git commit -m "Latest docs for travis build $TRAVIS_BUILD_NUMBER auto-pushed to gh-pages"
-  git push -fq origin gh-pages > /dev/null
+  git push origin gh-pages > /dev/null
 
   echo -e "Published scaladoc to gh-pages!\n"
 
