@@ -37,8 +37,6 @@ object GodeSunderApp extends App with BaseApp {
 
   val model = ActorSystem("gode-sunder-model", config)
 
-  val path: String = "./data/"
-
   val prng = new Random(42)
 
   // Create some tradable Securities...
@@ -89,7 +87,7 @@ object GodeSunderApp extends App with BaseApp {
     tickers.foreach {
       case (tradable, ticker) =>
         val jsonTicks = convertTicksToJson(ticker.get)
-        writeTicksToFile(jsonTicks, path + tradable.symbol + ".json")
+        writeTicksToFile(jsonTicks, "./data/" + tradable.symbol + ".json")
     }
   }(model.dispatcher)
 
