@@ -11,7 +11,7 @@ if [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_BRANCH" == "master" ]; th
 
     git config --global user.email "travis@travis-ci.org"
     git config --global user.name "travis-ci"
-    git clone --quiet --branch=gh-pages https://${GH_TOKEN}@github.com/ScalABM/example-model gh-pages > /dev/null
+    git clone --quiet --branch=gh-pages https://${GH_TOKEN}@github.com/ScalABM/models-library gh-pages
 
     cd gh-pages
 
@@ -22,7 +22,7 @@ if [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_BRANCH" == "master" ]; th
     # push to github!
     git add ./coverage
     git commit -m "Latest coverage report on successful travis build $TRAVIS_BUILD_NUMBER auto-pushed to gh-pages"
-    git push origin gh-pages > /dev/null
+    git push -f origin gh-pages
 
     echo -e "Published coverage reports to gh-pages!\n"
 fi
