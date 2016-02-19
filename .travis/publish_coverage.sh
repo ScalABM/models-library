@@ -16,8 +16,8 @@ if [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_BRANCH" == "master" ]; th
     cd gh-pages
 
     # copy over the new coverage stats
-    mkdir -p ./coverage/gode-sunder/latest
-    cp -Rf ../target/scala-2.11/scoverage-report ./coverage/gode-sunder/latest
+    mkdir -p ./coverage/gode-sunder/master
+    cp -Rf ../target/scala-2.11/scoverage-report ./coverage/gode-sunder/master
 
     # push to github!
     git add ./coverage
