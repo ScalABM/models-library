@@ -37,7 +37,8 @@ object GodeSunderApp extends App with BaseApp {
 
   val model = ActorSystem("gode-sunder-model", config)
 
-  val prng = new Random(42)
+  val seed = config.getLong("simulation.seed")
+  val prng = new Random(seed)
 
   // Create some tradable Securities...
   val numberMarkets = config.getInt("markets.number")
@@ -78,7 +79,11 @@ object GodeSunderApp extends App with BaseApp {
   traders.foreach(trader => reaper ! WatchMe(trader))
   reaper ! WatchMe(settlementMechanism)
 
-  model.scheduler.scheduleOnce(1.minute) {
+  // terminate the simulation
+  val length = config.getLong("simulation.duration.length")
+  val unit = config.getString("simulation.duration.timeUnit")
+  val simulationDuration = Duration(length, unit)
+  model.scheduler.scheduleOnce(simulationDuration) {
     traders.foreach(trader => trader ! PoisonPill)
     markets.foreach {
       case (tradable: Tradable, market: ActorRef) => market ! PoisonPill

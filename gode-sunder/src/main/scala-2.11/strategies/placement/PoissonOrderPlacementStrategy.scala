@@ -11,8 +11,8 @@ import scala.util.Random
 case class PoissonOrderPlacementStrategy(prng: Random, scheduler: Scheduler)
   extends OrderPlacementStrategy {
 
-  def waitTime(rate: Double): FiniteDuration = {
-    (-Math.log(prng.nextDouble()) / rate).millis  // @todo get rid of implicit conversions!
+  def waitTime(rate: Double, unit: String): FiniteDuration = {
+    FiniteDuration((-Math.log(prng.nextDouble()) / rate).toLong, unit)
   }
 
 }

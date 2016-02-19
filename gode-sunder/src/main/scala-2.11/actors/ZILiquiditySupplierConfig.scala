@@ -7,7 +7,7 @@ case class ZILiquiditySupplierConfig(config: Config) {
 
   val alpha = config.getDouble("limitOrderArrivalRate")
 
-  val delta = config.getDouble("orderCancellationArrivalRate")
+  val timeUnit = config.getString("timeUnit")
 
   val askOrderProb = config.getDouble("askOrderProbability")
 
