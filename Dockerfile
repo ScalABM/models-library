@@ -28,3 +28,9 @@ ENV SBT_VERSION 0.13.8
 RUN curl -L -o sbt-$SBT_VERSION.deb http://dl.bintray.com/sbt/debian/sbt-$SBT_VERSION.deb && \
     dpkg -i sbt-$SBT_VERSION.deb && \
     rm sbt-$SBT_VERSION.deb
+
+# Add non-Anaconda Python dependencies
+RUN conda update conda && \
+    conda install -y seaborn
+
+USER main
