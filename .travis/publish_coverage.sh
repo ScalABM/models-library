@@ -22,7 +22,7 @@ if [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_BRANCH" == "master" ]; th
     # push to github!
     git add ./coverage
     git commit -m "Latest coverage report on successful travis build $TRAVIS_BUILD_NUMBER auto-pushed to gh-pages"
-    git push -f origin gh-pages
+    git push origin gh-pages
 
     echo -e "Published coverage reports to gh-pages!\n"
 fi
