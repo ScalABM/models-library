@@ -28,7 +28,8 @@ case class ZILiquiditySupplier(config: ZILiquiditySupplierConfig,
 
   // possible insert this into post-start life-cycle hook?
   import context.dispatcher
-  val interval = orderPlacementStrategy.waitTime(config.alpha)
+  val unit = config.timeUnit
+  val interval = orderPlacementStrategy.waitTime(config.alpha, config.timeUnit)
   orderPlacementStrategy.schedule(interval, interval, self, SubmitLimitAskOrder)
   orderPlacementStrategy.schedule(interval, interval, self, SubmitLimitBidOrder)
 
