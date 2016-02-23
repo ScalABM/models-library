@@ -14,18 +14,58 @@
  limitations under the License.
 
  */
-import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.agent.Agent
 
 import java.io.PrintWriter
 
+import actors.SimpleSettlementMechanismActor
+import com.typesafe.config.ConfigFactory
+import markets.MarketActor
+import markets.engines.CDAMatchingEngine
+import markets.orders.orderings.ask.AskPriceTimeOrdering
+import markets.orders.orderings.bid.BidPriceTimeOrdering
 import markets.tickers.Tick
+import markets.tradables.{Security, Tradable}
 import play.api.libs.json.{Json, JsValue}
 
-import scala.collection.{immutable}
+import scala.collection.{mutable, immutable}
+import scala.util.Random
 
 
 trait BaseApp {
+
+  def traders: immutable.IndexedSeq[ActorRef]
+
+  val config = ConfigFactory.load("godeSunderModel.conf")
+
+  val model = ActorSystem("gode-sunder-model", config)
+
+  val seed = config.getLong("simulation.seed")
+  val prng = new Random(seed)
+
+  // Create some tradable Securities...
+  val numberMarkets = config.getInt("markets.number")
+  val tradables = immutable.Seq.fill[Tradable](numberMarkets){
+    Security(prng.alphanumeric.take(4).mkString)
+  }
+
+  // Create a simple settlement mechanism
+  val settlementProps = Props[SimpleSettlementMechanismActor]
+  val settlementMechanism = model.actorOf(settlementProps, "settlement-mechanism")
+
+  // Create a collection of tickers (one for each tradable security)
+  val tickers = tradables.map {
+    security => security -> Agent(immutable.Seq.empty[Tick])(model.dispatcher)
+  } (collection.breakOut): mutable.Map[Tradable, Agent[immutable.Seq[Tick]]]
+
+  // Create a collection of markets (one for each tradable security)
+  val referencePrice = config.getLong("markets.referencePrice")
+  val matchingEngine = CDAMatchingEngine(AskPriceTimeOrdering, BidPriceTimeOrdering, referencePrice)
+  val markets = tradables.map { security =>
+    val props = MarketActor.props(matchingEngine, settlementMechanism, tickers(security), security)
+    security -> model.actorOf(props.withDispatcher("markets.dispatcher"))
+  } (collection.breakOut): mutable.Map[Tradable, ActorRef]
 
   /** Converts a collection of Ticks to JSON.
     *
