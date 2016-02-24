@@ -55,7 +55,8 @@ object ZeroIntelligenceApp extends App with BaseApp {
     tickers.foreach {
       case (tradable, ticker) =>
         val jsonTicks = convertTicksToJson(ticker.get)
-        writeTicksToFile(jsonTicks, "./data/" + tradable.symbol + ".json")
+        val path = "./data/zero-intelligence/" + tradable.symbol + "" + ".json"
+        writeTicksToFile(jsonTicks, path)
     }
   }(model.dispatcher)
 

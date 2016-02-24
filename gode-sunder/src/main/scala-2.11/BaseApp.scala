@@ -55,8 +55,9 @@ trait BaseApp {
   val settlementMechanism = model.actorOf(settlementProps, "settlement-mechanism")
 
   // Create a collection of tickers (one for each tradable security)
+  val initialTick = Tick(50, 150, 100, 1, System.currentTimeMillis())
   val tickers = tradables.map {
-    security => security -> Agent(immutable.Seq.empty[Tick])(model.dispatcher)
+    security => security -> Agent(immutable.Seq(initialTick))(model.dispatcher)
   } (collection.breakOut): mutable.Map[Tradable, Agent[immutable.Seq[Tick]]]
 
   // Create a collection of markets (one for each tradable security)

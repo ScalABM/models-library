@@ -26,17 +26,20 @@ import scala.concurrent.duration.Duration
 
 object ZeroIntelligenceConstrainedApp extends App with BaseApp {
 
-  // Create some valuations
-  val valuations = tradables.map {
-    security => security -> 150L
-  } (collection.breakOut): mutable.Map[Tradable, Long]
-
   // Create some traders
   val numberTraders = config.getInt("traders.number")
   val tradingConfig = ZILiquiditySupplierConfig(config.getConfig("traders.params"))
   val traders = immutable.Vector.fill(numberTraders) {
+
+    // Create some valuations
+    val valuations = tradables.map {
+      security => security -> prng.nextInt(200).toLong
+    } (collection.breakOut): mutable.Map[Tradable, Long]
+
+    // Create an a trader with those valuations
     val props = ZICLiquiditySupplier.props(tradingConfig, markets, prng, tickers, valuations)
     model.actorOf(props.withDispatcher("traders.dispatcher"))
+
   }
 
   // Initialize the Reaper
@@ -60,7 +63,8 @@ object ZeroIntelligenceConstrainedApp extends App with BaseApp {
     tickers.foreach {
       case (tradable, ticker) =>
         val jsonTicks = convertTicksToJson(ticker.get)
-        writeTicksToFile(jsonTicks, "./data/" + tradable.symbol + ".json")
+        val path = "./data/zero-intelligence-constrained/" + tradable.symbol + "" + ".json"
+        writeTicksToFile(jsonTicks, path)
     }
   }(model.dispatcher)
 
