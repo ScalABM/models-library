@@ -2,12 +2,13 @@ FROM java:8
 
 MAINTAINER davidrpugh <david.pugh@maths.ox.ac.uk>
 
+USER root
+
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update -y && \
     apt-get install -y bzip2 && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*tmp
+    apt-get clean
 
 # Install Scala
 ENV BASE_URL=http://downloads.lightbend.com \
