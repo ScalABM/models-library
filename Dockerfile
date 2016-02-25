@@ -6,7 +6,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update -y && \
     apt-get install -y bzip2 && \
-    apt-get clean && \
+    apt-get clean
 
 # Install Scala
 ENV BASE_URL=http://downloads.lightbend.com \
