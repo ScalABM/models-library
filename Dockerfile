@@ -2,13 +2,12 @@ FROM java:8
 
 MAINTAINER davidrpugh <david.pugh@maths.ox.ac.uk>
 
-USER root
-
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update -y && \
     apt-get install -y bzip2 && \
-    apt-get clean
+    apt-get clean && \
+    rm -rf $HOME/var/lib/apt/lists/* $HOME/tmp/* $HOME/var/tmp/*tmp
 
 # Install Scala
 ENV BASE_URL=http://downloads.lightbend.com \
@@ -29,13 +28,6 @@ ENV DOWNLOAD_URL $BASE_URL/sbt/debian/sbt-$SBT_VERSION.deb
 RUN curl -L -o sbt-$SBT_VERSION.deb $DOWNLOAD_URL && \
     dpkg -i sbt-$SBT_VERSION.deb && \
     rm sbt-$SBT_VERSION.deb
-
-# Run docker image with a non-root user as a security precaution.
-RUN useradd -m -s /bin/bash main
-
-USER main
-ENV HOME /home/main
-WORKDIR $HOME
 
 # Install Anaconda Python distribution
 ENV CAPABILITY_HASH 3230d63b5fc54e62148e-c95ac804525aac4b6dba79b00b39d1d3
