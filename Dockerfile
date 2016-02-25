@@ -4,9 +4,12 @@ MAINTAINER davidrpugh <david.pugh@maths.ox.ac.uk>
 
 ENV DEBIAN_FRONTEND noninteractive
 
+USER root
+
 RUN apt-get update -y && \
     apt-get install -y bzip2 && \
-    apt-get clean
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*tmp
 
 # Install Scala
 ENV BASE_URL=http://downloads.lightbend.com \
