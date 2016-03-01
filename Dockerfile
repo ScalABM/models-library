@@ -49,4 +49,4 @@ ENV PATH $HOME/anaconda/bin:$PATH
 
 # Setup the Jupyter notebook
 EXPOSE 8888
-ADD start-notebook.sh $HOME
+COPY start-notebook.sh $HOME/
