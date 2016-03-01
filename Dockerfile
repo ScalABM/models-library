@@ -33,7 +33,14 @@ RUN curl -Lo sbt-$SBT_VERSION.tgz $DOWNLOAD_URL && \
     echo >> .bashrc && \
     echo 'export PATH=~/sbt-$SBT_VERSION/bin:$PATH' >> .bashrc
 
+# Run docker images with a non-root user as a security precaution.
+RUN useradd -m -s /bin/bash main
+
 # Install Anaconda Python distribution
+USER main
+ENV HOME /home/main
+WORKDIR $HOME
+
 ENV CAPABILITY_HASH 3230d63b5fc54e62148e-c95ac804525aac4b6dba79b00b39d1d3
 ENV BASE_URL https://$CAPABILITY_HASH.ssl.cf1.rackcdn.com
 ENV PYTHON_VERSION=3 \
