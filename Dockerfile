@@ -23,13 +23,15 @@ RUN curl -o scala-$SCALA_VERSION.tgz $DOWNLOAD_URL && \
     echo 'export PATH=~/scala-$SCALA_VERSION/bin:$PATH' >> .bashrc
 
 # Install SBT
-ENV BASE_URL=http://dl.bintray.com \
+ENV BASE_URL=http://dl.bintray.com/sbt/native-packages/sbt \
     SBT_VERSION=0.13.8
-ENV DOWNLOAD_URL $BASE_URL/sbt/debian/sbt-$SBT_VERSION.deb
+ENV DOWNLOAD_URL $BASE_URL/$SBT_VERSION/sbt-$SBT_VERSION.tgz
 
-RUN curl -L -o sbt-$SBT_VERSION.deb $DOWNLOAD_URL && \
-    dpkg -i sbt-$SBT_VERSION.deb && \
-    rm sbt-$SBT_VERSION.deb
+RUN curl -Lo sbt-$SBT_VERSION.tgz $DOWNLOAD_URL && \
+    tar -xf sbt-$SBT_VERSION.tgz && \
+    rm sbt-$SBT_VERSION.tgz && \
+    echo >> .bashrc && \
+    echo 'export PATH=~/sbt-$SBT_VERSION/bin:$PATH' >> .bashrc
 
 # Install Anaconda Python distribution
 ENV CAPABILITY_HASH 3230d63b5fc54e62148e-c95ac804525aac4b6dba79b00b39d1d3

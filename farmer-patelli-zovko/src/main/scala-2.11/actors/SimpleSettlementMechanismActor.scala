@@ -1,0 +1,6 @@
+package actors
+
+import markets.settlement.SettlementMechanismActor
+
+
+class SimpleSettlementMechanismActor extends SettlementMechanismActor
