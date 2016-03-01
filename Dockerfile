@@ -33,9 +33,6 @@ RUN curl -Lo sbt-$SBT_VERSION.tgz $DOWNLOAD_URL && \
     echo >> .bashrc && \
     echo 'export PATH=~/sbt-$SBT_VERSION/bin:$PATH' >> .bashrc
 
-# Run docker images with a non-root user as a security precaution.
-RUN useradd -m -s /bin/bash main
-
 # Install Anaconda Python distribution
 USER main
 ENV HOME /home/main
