@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND noninteractive
 USER root
 
 RUN apt-get update -y && \
-    apt-get install -y bzip2 && \
+    apt-get install -y bzip2 git-all && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*tmp
 
@@ -50,3 +50,6 @@ ENV PATH $HOME/anaconda/bin:$PATH
 # Setup the Jupyter notebook
 EXPOSE 8888
 COPY start-notebook.sh $HOME/
+
+# Install scalabm/models-library
+RUN git clone https://github.com/ScalABM/models-library.git
