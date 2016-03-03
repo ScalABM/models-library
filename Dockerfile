@@ -20,7 +20,7 @@ ENV DOWNLOAD_URL $BASE_URL/$SBT_VERSION/sbt-$SBT_VERSION.tgz
 RUN curl -Lo sbt-$SBT_VERSION.tgz $DOWNLOAD_URL && \
     tar -xf sbt-$SBT_VERSION.tgz && \
     rm sbt-$SBT_VERSION.tgz
-ENV PATH $HOME/sbt-$SBT_VERSION/bin:$PATH
+ENV PATH $HOME/sbt/bin:$PATH
 
 # Install extra Python dependencies
 RUN conda install -y seaborn
