@@ -9,7 +9,7 @@ import markets.tickers.Tick
 import markets.tradables.Tradable
 import strategies.trading.ZICLimitOrderTradingStrategy
 
-import scala.collection.{immutable, mutable}
+import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
 import scala.util.Random
 
@@ -17,7 +17,7 @@ import scala.util.Random
 case class ZICLiquiditySupplier(config: ZILiquiditySupplierConfig,
                                 markets: mutable.Map[Tradable, ActorRef],
                                 prng: Random,
-                                tickers: mutable.Map[Tradable, Agent[immutable.Seq[Tick]]],
+                                tickers: mutable.Map[Tradable, Agent[Tick]],
                                 valuations: mutable.Map[Tradable, Long])
   extends RandomLiquiditySupplier[ZICLimitOrderTradingStrategy] {
 
@@ -43,7 +43,7 @@ object ZICLiquiditySupplier {
   def props(config: ZILiquiditySupplierConfig,
             markets: mutable.Map[Tradable, ActorRef],
             prng: Random,
-            tickers: mutable.Map[Tradable, Agent[immutable.Seq[Tick]]],
+            tickers: mutable.Map[Tradable, Agent[Tick]],
             valuations: mutable.Map[Tradable, Long]): Props = {
     Props(new ZICLiquiditySupplier(config, markets, prng, tickers, valuations))
   }

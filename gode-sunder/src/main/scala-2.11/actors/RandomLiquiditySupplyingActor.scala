@@ -5,22 +5,19 @@ import akka.agent.Agent
 
 import markets.orders.Order
 import markets.participants.RandomLiquiditySupplier
+import markets.participants.strategies.RandomLimitOrderTradingStrategy
 import markets.tickers.Tick
 import markets.tradables.Tradable
-import strategies.trading.ZILimitOrderTradingStrategy
 
 import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
 import scala.util.Random
 
 
-case class ZILiquiditySupplier(config: ZILiquiditySupplierConfig,
-                               markets: mutable.Map[Tradable, ActorRef],
-                               prng: Random,
-                               tickers: mutable.Map[Tradable, Agent[Tick]])
-  extends RandomLiquiditySupplier[ZILimitOrderTradingStrategy] {
-
-  val limitOrderTradingStrategy = ZILimitOrderTradingStrategy(config, prng)
+case class RandomLiquiditySupplyingActor(limitOrderTradingStrategy: RandomLimitOrderTradingStrategy,
+                                         markets: mutable.Map[Tradable, ActorRef],
+                                         tickers: mutable.Map[Tradable, Agent[Tick]])
+  extends RandomLiquiditySupplier {
 
   val outstandingOrders = mutable.Set.empty[Order]
 
@@ -37,11 +34,9 @@ case class ZILiquiditySupplier(config: ZILiquiditySupplierConfig,
 }
 
 
-object ZILiquiditySupplier {
+object RandomLiquiditySupplingActor {
 
-  def props(config: ZILiquiditySupplierConfig,
-            markets: mutable.Map[Tradable, ActorRef],
-            prng: Random,
+  def props(markets: mutable.Map[Tradable, ActorRef],
             tickers: mutable.Map[Tradable, Agent[Tick]]): Props = {
     Props(new ZILiquiditySupplier(config, markets, prng, tickers))
   }
