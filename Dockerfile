@@ -2,8 +2,6 @@ FROM andrewosh/binder-base
 
 MAINTAINER davidrpugh <david.pugh@maths.ox.ac.uk>
 
-USER root
-
 # Install Scala
 ENV BASE_URL=http://downloads.lightbend.com \
     SCALA_VERSION=2.11.7
@@ -25,3 +23,6 @@ RUN curl -Lo sbt-$SBT_VERSION.tgz $DOWNLOAD_URL && \
     rm sbt-$SBT_VERSION.tgz && \
     echo >> .bashrc && \
     echo 'export PATH=~/sbt-$SBT_VERSION/bin:$PATH' >> .bashrc
+
+# Install extra Python dependencies
+RUN conda -y install seaborn
