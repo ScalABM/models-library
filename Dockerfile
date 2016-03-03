@@ -1,15 +1,8 @@
-FROM java:8
+FROM andrewosh/binder-base
 
 MAINTAINER davidrpugh <david.pugh@maths.ox.ac.uk>
 
-ENV DEBIAN_FRONTEND noninteractive
-
 USER root
-
-RUN apt-get update -y && \
-    apt-get install -y bzip2 git-all && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*tmp
 
 # Install Scala
 ENV BASE_URL=http://downloads.lightbend.com \
@@ -32,24 +25,3 @@ RUN curl -Lo sbt-$SBT_VERSION.tgz $DOWNLOAD_URL && \
     rm sbt-$SBT_VERSION.tgz && \
     echo >> .bashrc && \
     echo 'export PATH=~/sbt-$SBT_VERSION/bin:$PATH' >> .bashrc
-
-# Install Anaconda Python distribution
-USER main
-ENV HOME /home/main
-WORKDIR $HOME
-
-ENV CAPABILITY_HASH 3230d63b5fc54e62148e-c95ac804525aac4b6dba79b00b39d1d3
-ENV BASE_URL https://$CAPABILITY_HASH.ssl.cf1.rackcdn.com
-ENV PYTHON_VERSION=3 \
-    ANACONDA_VERSION=2.5.0
-
-RUN wget -q $BASE_URL/Anaconda$PYTHON_VERSION-$ANACONDA_VERSION-Linux-x86_64.sh
-RUN bash Anaconda$PYTHON_VERSION-$ANACONDA_VERSION-Linux-x86_64.sh -b
-ENV PATH $HOME/anaconda/bin:$PATH
-
-# Setup the Jupyter notebook
-EXPOSE 8888
-COPY start-notebook.sh $HOME/
-
-# Install scalabm/models-library
-RUN git clone https://github.com/ScalABM/models-library.git
