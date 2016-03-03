@@ -25,4 +25,4 @@ RUN curl -Lo sbt-$SBT_VERSION.tgz $DOWNLOAD_URL && \
     echo 'export PATH=~/sbt-$SBT_VERSION/bin:$PATH' >> .bashrc
 
 # Install extra Python dependencies
-RUN conda -y install seaborn
+RUN conda install -y seaborn
