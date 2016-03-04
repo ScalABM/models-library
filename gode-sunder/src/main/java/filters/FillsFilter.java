@@ -27,7 +27,7 @@ public class FillsFilter extends Filter<ILoggingEvent> {
     @Override
     public FilterReply decide(ILoggingEvent event) {
 
-        boolean isFill = event.getFormattedMessage().contains("Fill");
+        boolean isFill = event.getFormattedMessage().contains("markets.Fill");
 
         if (isFill) {
             return FilterReply.ACCEPT;
