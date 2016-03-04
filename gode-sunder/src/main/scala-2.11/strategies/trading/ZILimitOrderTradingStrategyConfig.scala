@@ -3,9 +3,7 @@ package strategies.trading
 import com.typesafe.config.Config
 
 
-trait ZILimitOrderTradingStrategyConfig extends ZITradingStrategyConfig {
-
-  def config: Config
+class ZILimitOrderTradingStrategyConfig(val config: Config) extends ZITradingStrategyConfig {
 
   // lower bound on the support of the ask order price distribution
   val minAskPrice = config.getLong("minAskPrice")

@@ -4,46 +4,40 @@ import akka.actor.{ActorRef, Props}
 import akka.agent.Agent
 
 import markets.orders.Order
-import markets.participants.{RandomLiquidityDemander, LiquidityDemander}
+import markets.participants.RandomLiquidityDemander
+import markets.participants.strategies.RandomMarketOrderTradingStrategy
 import markets.tickers.Tick
 import markets.tradables.Tradable
-import strategies.trading.ZIMarketOrderTradingStrategy
+import strategies.placement.RandomOrderPlacementStrategy
 
 import scala.collection.mutable
-import scala.concurrent.duration.FiniteDuration
-import scala.util.Random
 
 
-case class ZILiquidityDemander(config: RandomLiquidityDemanderConfig,
-                               markets: mutable.Map[Tradable, ActorRef],
-                               prng: Random,
-                               tickers: mutable.Map[Tradable, Agent[Tick]])
-  extends RandomLiquidityDemander[ZIMarketOrderTradingStrategy] {
-
-  val marketOrderTradingStrategy = ZIMarketOrderTradingStrategy(config, prng)
+class RandomLiquidityDemandingActor(val marketOrderTradingStrategy: RandomMarketOrderTradingStrategy,
+                                    val markets: mutable.Map[Tradable, ActorRef],
+                                    val orderPlacementStrategy: RandomOrderPlacementStrategy,
+                                    val tickers: mutable.Map[Tradable, Agent[Tick]])
+  extends RandomLiquidityDemander[RandomMarketOrderTradingStrategy] {
 
   val outstandingOrders = mutable.Set.empty[Order]
 
   // possible insert this into post-start life-cycle hook?
   import context.dispatcher
-  val interval = waitTime(config.mu, config.timeUnit)
-  context.system.scheduler.schedule(interval, interval, self, SubmitMarketAskOrder)
-  context.system.scheduler.schedule(interval, interval, self, SubmitMarketBidOrder)
-
-  private[this] def waitTime(rate: Double, unit: String): FiniteDuration = {
-    FiniteDuration((-Math.log(prng.nextDouble()) / rate).toLong, unit)
-  }
+  val initialDelay = orderPlacementStrategy.waitTime()
+  val interval = orderPlacementStrategy.waitTime()
+  context.system.scheduler.schedule(initialDelay, interval, self, SubmitMarketAskOrder)
+  context.system.scheduler.schedule(initialDelay, interval, self, SubmitMarketBidOrder)
 
 }
 
 
-object ZILiquidityDemander {
+object RandomLiquidityDemandingActor {
 
-  def props(config: RandomLiquidityDemanderConfig,
+  def props(marketOrderTradingStrategy: RandomMarketOrderTradingStrategy,
             markets: mutable.Map[Tradable, ActorRef],
-            prng: Random,
+            orderPlacementStrategy: RandomOrderPlacementStrategy,
             tickers: mutable.Map[Tradable, Agent[Tick]]): Props = {
-    Props(new ZILiquidityDemander(config, markets, prng, tickers))
+    Props(new RandomLiquidityDemandingActor(marketOrderTradingStrategy, markets, orderPlacementStrategy, tickers))
   }
 
 }

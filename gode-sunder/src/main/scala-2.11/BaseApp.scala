@@ -27,9 +27,8 @@ import markets.orders.orderings.ask.AskPriceTimeOrdering
 import markets.orders.orderings.bid.BidPriceTimeOrdering
 import markets.tickers.Tick
 import markets.tradables.{Security, Tradable}
-import play.api.libs.json.{Json, JsValue}
 
-import scala.collection.{mutable, immutable}
+import scala.collection.immutable
 import scala.util.Random
 
 
@@ -50,44 +49,4 @@ trait BaseApp {
     Security(prng.alphanumeric.take(4).mkString)
   }
 
-  // Create a simple settlement mechanism
-  val settlementProps = Props[SimpleSettlementMechanismActor]
-  val settlementMechanism = model.actorOf(settlementProps, "settlement-mechanism")
-
-  // Create a collection of tickers (one for each tradable security)
-  val initialTick = Tick(50, 150, 100, 1, System.currentTimeMillis())
-  val tickers = tradables.map {
-    security => security -> Agent(immutable.Seq(initialTick))(model.dispatcher)
-  } (collection.breakOut): mutable.Map[Tradable, Agent[immutable.Seq[Tick]]]
-
-  // Create a collection of markets (one for each tradable security)
-  val referencePrice = config.getLong("markets.referencePrice")
-  val matchingEngine = CDAMatchingEngine(AskPriceTimeOrdering, BidPriceTimeOrdering, referencePrice)
-  val markets = tradables.map { security =>
-    val props = MarketActor.props(matchingEngine, settlementMechanism, tickers(security), security)
-    security -> model.actorOf(props.withDispatcher("markets.dispatcher"))
-  } (collection.breakOut): mutable.Map[Tradable, ActorRef]
-
-  /** Converts a collection of Ticks to JSON.
-    *
-    * @param ticks the collection of Tick instances to be converted into JSON.
-    * @return JSON data representing the collection of Tick instances.
-    */
-  def convertTicksToJson(ticks: immutable.Seq[Tick]): JsValue = {
-    Json.toJson(
-      ticks.map { tick => immutable.Map("askPrice" -> tick.askPrice, "bidPrice" -> tick.bidPrice,
-        "price" -> tick.price, "quantity" -> tick.quantity, "timestamp" -> tick.timestamp)
-      })
-  }
-
-  /** Writes JSON Ticks to a specified file.
-    *
-    * @param json
-    * @param path
-    */
-  def writeTicksToFile(json: JsValue, path: String): Unit = {
-    val target = new PrintWriter(path)
-    target.write(json.toString())
-    target.close()
-  }
 }

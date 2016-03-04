@@ -10,7 +10,7 @@ import scala.util.Random
 
 
 /** Zero Intelligence (Constrained) behavior as defined by Gode and Sunder, JPE (1993). */
-class ZICLimitOrderTradingStrategy(config: ZITradingStrategyConfig,
+class ZICLimitOrderTradingStrategy(config: ZILimitOrderTradingStrategyConfig,
                                    prng: Random,
                                    valuations: mutable.Map[Tradable, Long])
   extends ZILimitOrderTradingStrategy(config, prng) {
@@ -52,7 +52,7 @@ class ZICLimitOrderTradingStrategy(config: ZITradingStrategyConfig,
 
 object ZICLimitOrderTradingStrategy {
 
-  def apply(config: ZITradingStrategyConfig,
+  def apply(config: ZILimitOrderTradingStrategyConfig,
             prng: Random,
             valuations: mutable.Map[Tradable, Long]): ZICLimitOrderTradingStrategy = {
     new ZICLimitOrderTradingStrategy(config, prng, valuations)

@@ -1,8 +1,6 @@
 package strategies.trading
 
 import akka.agent.Agent
-
-import actors.ZILiquiditySupplierConfig
 import markets.participants.strategies.RandomLimitOrderTradingStrategy
 import markets.tickers.Tick
 import markets.tradables.Tradable
