@@ -3,22 +3,23 @@ FROM andrewosh/binder-base
 MAINTAINER davidrpugh <david.pugh@maths.ox.ac.uk>
 
 # Install Java
-ENV JAVA_VERSION=8u74 \
-    JAVA_BUILD=b02 \
-    BASE_URL=http://download.oracle.com
-ENV JAVA_SOURCE=jdk-$JAVA_VERSION-linux-x64.tar.gz
-ENV DOWNLOAD_URL=$BASE_URL/otn-pub/java/jdk/$JAVA_VERSION-$JAVA_BUILD/$JAVA_SOURCE
+ENV JAVA_VERSION=8 \
+    JAVA_UPDATE=74 \
+    JAVA_BUILD=02 \
+    BASE_URL=http://download.oracle.com/otn-pub/java/jdk
+ENV JAVA_SOURCE jdk-${JAVA_VERSION}u${JAVA_UPDATE}-linux-x64.tar.gz
+ENV DOWNLOAD_URL $BASE_URL/${JAVA_VERSION}u${JAVA_UPDATE}-b${JAVA_BUILD}/$JAVA_SOURCE
 
 # this is not secure...perhaps need to run as root?
 RUN curl --insecure --location \
          --cookie "oraclelicense=accept-securebackup-cookie" \
-         --output jdk-$JAVA_VERSION-linux-x64.tar.gz \
+         --output $JAVA_SOURCE \
          $DOWNLOAD_URL && \
     mkdir $HOME/java && \
-    tar -zxf jdk-$JAVA_VERSION-linux-x64.tar.gz -C $HOME/java/ && \
-    rm jdk-$JAVA_VERSION-linux-x64.tar.gz
+    tar -zxf $JAVA_SOURCE -C $HOME/java/ && \
+    rm $JAVA_SOURCE
 
-ENV JAVA_HOME=$HOME/java/jdk$JAVA_VERSION
+ENV JAVA_HOME=$HOME/java/jdk1.$JAVA_VERSION.0_$JAVA_UPDATE
 ENV PATH=$JAVA_HOME/bin:$PATH
 
 # Install Scala
