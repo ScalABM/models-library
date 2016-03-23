@@ -9,7 +9,8 @@ ENV JAVA_VERSION=8u74 \
 ENV JAVA_SOURCE=jdk-$JAVA_VERSION-linux-x64.tar.gz
 ENV DOWNLOAD_URL=$BASE_URL/otn-pub/java/jdk/$JAVA_VERSION-$JAVA_BUILD/$JAVA_SOURCE
 
-RUN curl -kL \
+# this is not secure...perhaps need to run as root?
+RUN curl --insecure --location \
          --cookie "oraclelicense=accept-securebackup-cookie" \
          --output jdk-$JAVA_VERSION-linux-x64.tar.gz \
          $DOWNLOAD_URL && \
