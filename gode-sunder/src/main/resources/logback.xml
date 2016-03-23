@@ -1,7 +1,7 @@
 <configuration>
     <appender name="FILLS" class="ch.qos.logback.core.FileAppender">
         <filter class="filters.FillsFilter" />
-        <file>data/zero-intelligence/fills.log</file>
+        <file>data/fills.log</file>
         <append>false</append>
         <encoder>
             <pattern>%msg%n</pattern>

@@ -35,7 +35,6 @@ import scala.concurrent.duration.Duration
 object ZeroIntelligenceConstrainedApp extends App with BaseApp {
 
   // Create a simple settlement mechanism
-  val base = "./data/zero-intelligence/"
   val settlementProps = Props[LoggingSettlementMechanismActor]
   val settlementMechanism = model.actorOf(settlementProps, "settlement-mechanism")
 

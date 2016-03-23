@@ -18,7 +18,7 @@
 import akka.actor.{PoisonPill, ActorRef, Props}
 import akka.agent.Agent
 
-import actors.{LoggingSettlementMechanismActor, SimpleSettlementMechanismActor, RandomLiquiditySupplyingActor}
+import actors.{LoggingSettlementMechanismActor, RandomLiquiditySupplyingActor}
 import markets.MarketActor
 import markets.engines.CDAMatchingEngine
 import markets.orders.orderings.ask.AskPriceTimeOrdering
@@ -35,7 +35,6 @@ import scala.concurrent.duration.Duration
 object ZeroIntelligenceApp extends App with BaseApp {
 
   // Create a simple settlement mechanism
-  val base = "./data/zero-intelligence/"
   val settlementProps = Props[LoggingSettlementMechanismActor]
   val settlementMechanism = model.actorOf(settlementProps, "settlement-mechanism")
 
