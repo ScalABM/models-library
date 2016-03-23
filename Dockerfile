@@ -1,15 +1,26 @@
-FROM java:8
+FROM andrewosh/binder-base
 
 MAINTAINER davidrpugh <david.pugh@maths.ox.ac.uk>
 
-ENV DEBIAN_FRONTEND noninteractive
+# Install Java
+ENV JAVA_VERSION=8 \
+    JAVA_UPDATE=74 \
+    JAVA_BUILD=02 \
+    BASE_URL=http://download.oracle.com/otn-pub/java/jdk
+ENV JAVA_SOURCE jdk-${JAVA_VERSION}u${JAVA_UPDATE}-linux-x64.tar.gz
+ENV DOWNLOAD_URL $BASE_URL/${JAVA_VERSION}u${JAVA_UPDATE}-b${JAVA_BUILD}/$JAVA_SOURCE
 
-USER root
+# this is not secure...perhaps need to run as root?
+RUN curl --insecure --location \
+         --cookie "oraclelicense=accept-securebackup-cookie" \
+         --output $JAVA_SOURCE \
+         $DOWNLOAD_URL && \
+    mkdir $HOME/java && \
+    tar -zxf $JAVA_SOURCE -C $HOME/java/ && \
+    rm $JAVA_SOURCE
 
-RUN apt-get update -y && \
-    apt-get install -y bzip2 && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*tmp
+ENV JAVA_HOME=$HOME/java/jdk1.$JAVA_VERSION.0_$JAVA_UPDATE
+ENV PATH=$JAVA_HOME/bin:$PATH
 
 # Install Scala
 ENV BASE_URL=http://downloads.lightbend.com \
@@ -17,32 +28,21 @@ ENV BASE_URL=http://downloads.lightbend.com \
 ENV DOWNLOAD_URL $BASE_URL/scala/$SCALA_VERSION/scala-$SCALA_VERSION.tgz
 
 RUN curl -o scala-$SCALA_VERSION.tgz $DOWNLOAD_URL && \
-    tar -xf scala-$SCALA_VERSION.tgz && \
-    rm scala-$SCALA_VERSION.tgz && \
-    echo >> .bashrc && \
-    echo 'export PATH=~/scala-$SCALA_VERSION/bin:$PATH' >> .bashrc
+    mkdir $HOME/scala && \
+    tar -xf scala-$SCALA_VERSION.tgz -C $HOME/scala/ && \
+    rm scala-$SCALA_VERSION.tgz
+ENV PATH $HOME/scala/scala-$SCALA_VERSION/bin:$PATH
 
-# Install SBT
+# Install Scala Build Tool (SBT)
 ENV BASE_URL=http://dl.bintray.com/sbt/native-packages/sbt \
     SBT_VERSION=0.13.8
 ENV DOWNLOAD_URL $BASE_URL/$SBT_VERSION/sbt-$SBT_VERSION.tgz
 
 RUN curl -Lo sbt-$SBT_VERSION.tgz $DOWNLOAD_URL && \
+    mkdir $HOME/sbt && \
     tar -xf sbt-$SBT_VERSION.tgz && \
-    rm sbt-$SBT_VERSION.tgz && \
-    echo >> .bashrc && \
-    echo 'export PATH=~/sbt-$SBT_VERSION/bin:$PATH' >> .bashrc
+    rm sbt-$SBT_VERSION.tgz
+ENV PATH $HOME/sbt/bin:$PATH
 
-# Install Anaconda Python distribution
-ENV CAPABILITY_HASH 3230d63b5fc54e62148e-c95ac804525aac4b6dba79b00b39d1d3
-ENV BASE_URL https://$CAPABILITY_HASH.ssl.cf1.rackcdn.com
-ENV PYTHON_VERSION=3 \
-    ANACONDA_VERSION=2.5.0
-
-RUN wget -q $BASE_URL/Anaconda$PYTHON_VERSION-$ANACONDA_VERSION-Linux-x86_64.sh
-RUN bash Anaconda$PYTHON_VERSION-$ANACONDA_VERSION-Linux-x86_64.sh -b
-ENV PATH $HOME/anaconda/bin:$PATH
-
-# Setup the Jupyter notebook
-EXPOSE 8888
-ADD start-notebook.sh $HOME
+# Install extra Python dependencies
+RUN conda install -y seaborn
