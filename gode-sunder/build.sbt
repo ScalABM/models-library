@@ -12,7 +12,8 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "com.typesafe.play" %% "play-json" % "2.4.6",
+  "com.typesafe.akka" %% "akka-slf4j" % "2.4.1",
+  "com.typesafe.play" %% "play-json" % "2.3.8",
   "ch.qos.logback" % "logback-classic" % "1.1.3",
   "com.github.ScalABM" %% "markets-sandbox" % "0.1.0-alpha-SNAPSHOT"
 )
