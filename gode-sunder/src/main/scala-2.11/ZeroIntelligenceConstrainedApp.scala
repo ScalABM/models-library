@@ -15,10 +15,10 @@
 
  */
 
-import akka.actor.{PoisonPill, ActorRef, Props}
+import akka.actor.{ActorRef, PoisonPill, Props}
 import akka.agent.Agent
 
-import actors.{SimpleSettlementMechanismActor, RandomLiquiditySupplyingActor}
+import actors.{LoggingSettlementMechanismActor, RandomLiquiditySupplyingActor}
 import markets.MarketActor
 import markets.engines.CDAMatchingEngine
 import markets.orders.orderings.ask.AskPriceTimeOrdering
@@ -26,9 +26,9 @@ import markets.orders.orderings.bid.BidPriceTimeOrdering
 import markets.tickers.Tick
 import markets.tradables.Tradable
 import strategies.placement.{RandomOrderPlacementStrategy, RandomOrderPlacementStrategyConfig}
-import strategies.trading.{ZILimitOrderTradingStrategyConfig, ZICLimitOrderTradingStrategy}
+import strategies.trading.{ZICLimitOrderTradingStrategy, ZILimitOrderTradingStrategyConfig}
 
-import scala.collection.{mutable, immutable}
+import scala.collection.{immutable, mutable}
 import scala.concurrent.duration.Duration
 
 
@@ -36,7 +36,7 @@ object ZeroIntelligenceConstrainedApp extends App with BaseApp {
 
   // Create a simple settlement mechanism
   val base = "./data/zero-intelligence/"
-  val settlementProps = SimpleSettlementMechanismActor.props(base)
+  val settlementProps = Props[LoggingSettlementMechanismActor]
   val settlementMechanism = model.actorOf(settlementProps, "settlement-mechanism")
 
   // Create a collection of tickers (one for each tradable security)
