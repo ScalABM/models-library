@@ -22,12 +22,12 @@ libraryDependencies ++= Seq(
 fork in run := true
 
 javaOptions ++= Seq(
-  "-Xmn3G",
-  "-Xmx6G",
+  //"-Xmn3G",
+  //"-Xmx6G",
   //"-XX:+UseG1GC",
-  "-XX:+UseNUMA",
-  "-XX:+UseCondCardMark",
-  "-XX:-UseBiasedLocking",
+  //"-XX:+UseNUMA",
+  //"-XX:+UseCondCardMark",
+  //"-XX:-UseBiasedLocking",
   "-XX:+PrintCommandLineFlags"
   //"-XX:+PrintGCDetails",
   //"-XX:+PrintGCTimeStamps"
