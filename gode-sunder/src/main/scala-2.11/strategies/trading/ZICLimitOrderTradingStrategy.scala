@@ -25,6 +25,10 @@ class ZICLimitOrderTradingStrategy(config: ZILimitOrderTradingStrategyConfig,
     }
   }
 
+  override def askPrice(ticker: Agent[Tick], tradable: Tradable): Long = {
+    uniformRandomVariate(valuations(tradable), config.maxAskPrice)
+  }
+
   override def bidOrderStrategy(tickers: mutable.Map[Tradable, Agent[Tick]]): Option[(Long, Long,
     Tradable)] = {
     chooseOneOf(underValued(tickers)) match {
@@ -33,6 +37,10 @@ class ZICLimitOrderTradingStrategy(config: ZILimitOrderTradingStrategyConfig,
       case None =>
         None
     }
+  }
+
+  override def bidPrice(ticker: Agent[Tick], tradable: Tradable): Long = {
+    uniformRandomVariate(config.minAskPrice, valuations(tradable))
   }
 
   private[this] def overValued(tickers: mutable.Map[Tradable, Agent[Tick]]) = {
