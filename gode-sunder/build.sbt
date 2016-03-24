@@ -23,7 +23,7 @@ fork in run := true
 
 javaOptions ++= Seq(
   //"-Xmn3G",
-  //"-Xmx6G",
+  //"-Xmx2G",
   //"-XX:+UseG1GC",
   //"-XX:+UseNUMA",
   //"-XX:+UseCondCardMark",
