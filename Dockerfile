@@ -46,6 +46,5 @@ ENV PATH $HOME/sbt/bin:$PATH
 
 # Install extra Python dependencies
 ADD requirements.txt $HOME/requirements.txt
-RUN $SHELL -c 'source activate python3'
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
+RUN $HOME/anaconda2/envs/python3/bin/pip install --upgrade pip && \
+    $HOME/anaconda2/envs/python3/bin/pip install -r requirements.txt
