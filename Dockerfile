@@ -45,4 +45,7 @@ RUN curl -Lo sbt-$SBT_VERSION.tgz $DOWNLOAD_URL && \
 ENV PATH $HOME/sbt/bin:$PATH
 
 # Install extra Python dependencies
-RUN conda install -y seaborn
+ADD requirements.txt $HOME/requirements.txt
+RUN $SHELL -c 'source activate python3'
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt
