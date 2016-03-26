@@ -39,7 +39,7 @@ object ZeroIntelligenceConstrainedApp extends App with BaseApp {
   val settlementMechanism = model.actorOf(settlementProps, "settlement-mechanism")
 
   // Create a collection of tickers (one for each tradable security)
-  val initialTick = Tick(50, 150, 100, 1, System.currentTimeMillis())
+  val initialTick = Tick(1, 2, 1, 1, System.currentTimeMillis())
   val tickers = tradables.map {
     security => security -> Agent(initialTick)(model.dispatcher)
   } (collection.breakOut): mutable.Map[Tradable, Agent[Tick]]
