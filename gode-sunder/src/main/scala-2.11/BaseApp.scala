@@ -36,7 +36,7 @@ trait BaseApp {
 
   def traders: immutable.IndexedSeq[ActorRef]
 
-  val config = ConfigFactory.load("godeSunderModel.conf")
+  val config = ConfigFactory.load("model.conf")
 
   val model = ActorSystem("gode-sunder-model", config)
 
