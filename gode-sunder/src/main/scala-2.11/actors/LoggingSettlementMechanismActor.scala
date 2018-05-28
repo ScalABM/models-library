@@ -3,8 +3,8 @@ package actors
 import akka.actor.ActorLogging
 
 import markets.Fill
-import markets.settlement.SettlementMechanismActor
-import play.api.libs.json.{JsObject, JsNumber, JsString, JsValue, Json}
+import markets.actors.settlement.SettlementMechanismActor
+import play.api.libs.json.{JsNumber, JsObject, JsString, JsValue, Json}
 
 
 class LoggingSettlementMechanismActor extends SettlementMechanismActor with ActorLogging {
